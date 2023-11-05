@@ -1,5 +1,6 @@
-
-
+## Tabellenformat und -einlesen
+csv
+https://www.geeksforgeeks.org/reading-csv-file-java-using-opencsv/
 
 ## Spaltensicht
 
@@ -11,3 +12,7 @@ https://www.baeldung.com/java-array-vs-list-performance
 
 https://www.baeldung.com/java-comparing-arrays
 https://www.delftstack.com/howto/java/compare-arrays-in-java/
+benutze comparators
+
+
+
