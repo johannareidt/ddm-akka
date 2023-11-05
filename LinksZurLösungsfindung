@@ -1,0 +1,10 @@
+## Spaltensicht
+
+https://www.baeldung.com/java-array-vs-list-performance
+=> Arrays besser. Weniger Fehler und meistens schneller. Es müssen auch keine Elemnte hinzugefügt werden
+
+
+## Spaltenvergleich
+
+https://www.baeldung.com/java-comparing-arrays
+
