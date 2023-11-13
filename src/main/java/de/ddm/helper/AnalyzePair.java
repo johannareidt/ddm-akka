@@ -19,18 +19,6 @@ public class AnalyzePair implements Serializable {
         this.column2 = column2;
     }
 
-
-    public void setSorter(Comparator<String> sorter){
-        this.column1.setSorter(sorter);
-        this.column2.setSorter(sorter);
-    }
-
-
-    public void sort(){
-        this.column1.sort();
-        this.column2.sort();
-    }
-
     public boolean firstIsSubSetToSecond(){
         return this.column2.containsAll(this.column1);
     }
