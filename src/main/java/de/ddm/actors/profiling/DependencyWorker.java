@@ -8,12 +8,18 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import de.ddm.actors.patterns.LargeMessageProxy;
+import de.ddm.helper.AnalyzePair;
+import de.ddm.helper.CSVTable;
+import de.ddm.helper.EmptyPair;
+import de.ddm.helper.EmptyTable;
 import de.ddm.serialization.AkkaSerializable;
+import de.ddm.structures.InclusionDependency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message> {
@@ -39,7 +45,86 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 	public static class TaskMessage implements Message {
 		private static final long serialVersionUID = -4667745204456518160L;
 		ActorRef<LargeMessageProxy.Message> dependencyMinerLargeMessageProxy;
-		int task;
+		Task task;
+	}
+
+	@Getter
+	@AllArgsConstructor
+	public static abstract class Task {
+		abstract DependencyMiner.Result handle();
+	}
+
+	//public static class
+
+	public static class AnalyzeTask extends Task{
+		private final AnalyzePair analyzePair;
+		AnalyzeTask(AnalyzePair analyzePair){
+			this.analyzePair = analyzePair;
+		}
+
+
+		@Override
+		DependencyMiner.Result handle() {
+			DependencyMiner.Result result = new DependencyMiner.Result();
+			InclusionDependency id = analyzePair.firstIsSubSetToSecond();
+			if(id == null){
+				id = analyzePair.secondIsSubSetToFirst();
+			}
+			result.setInclusionDependency(id);
+			return result;
+		}
+	}
+
+	public static class CreateTableTask extends Task{
+		private final List<String[]> batch;
+		private final String filepath;
+
+		CreateTableTask(String filepath,List<String[]> batch){
+			this.filepath = filepath;
+			this.batch = batch;
+		}
+		@Override
+		DependencyMiner.Result handle() {
+			DependencyMiner.Result result = new DependencyMiner.Result();
+			result.table = new CSVTable(filepath, batch);
+			result.table.split();
+			return result;
+		}
+	}
+
+
+
+	public static class MakePairsTask extends Task {
+		EmptyTable t1;
+		EmptyTable t2;
+		public MakePairsTask(EmptyTable t1, EmptyTable t2) {
+			this.t1 = t1;
+			this.t2 = t2;
+		}
+
+		@Override
+		DependencyMiner.Result handle() {
+			DependencyMiner.Result result = new DependencyMiner.Result();
+			List<EmptyPair> pairs = new ArrayList<>();
+			for(String col1: this.t1.getHeader()){
+				for(String col2: this.t2.getHeader()){
+					pairs.add(new EmptyPair(this.t1.getFilepath(),this.t2.getFilepath(), col1, col2));
+				}
+			}
+			result.setPairs(pairs);
+			return result;
+		}
+	}
+	public static class WaitTask extends Task {
+		@Override
+		DependencyMiner.Result handle() {
+			try {
+				wait(1000);
+			} catch (InterruptedException e) {
+				//TODO: log
+			}
+			return new DependencyMiner.Result();
+		}
 	}
 
 	////////////////////////
@@ -90,6 +175,9 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		this.getContext().getLog().info("Working!");
 		// I should probably know how to solve this task, but for now I just pretend some work...
 
+
+		//TODO: handle Task
+		/*
 		int result = message.getTask();
 		long time = System.currentTimeMillis();
 		Random rand = new Random();
@@ -97,9 +185,23 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		while (System.currentTimeMillis() - time < runtime)
 			result = ((int) Math.abs(Math.sqrt(result)) * result) % 1334525;
 
-		LargeMessageProxy.LargeMessage completionMessage = new DependencyMiner.CompletionMessage(this.getContext().getSelf(), result);
-		this.largeMessageProxy.tell(new LargeMessageProxy.SendMessage(completionMessage, message.getDependencyMinerLargeMessageProxy()));
+		 */
+
+		sendResults(message,message.getTask().handle());
+
+		//LargeMessageProxy.LargeMessage completionMessage = new DependencyMiner.CompletionMessage(this.getContext().getSelf(), result);
+		//this.largeMessageProxy.tell(new LargeMessageProxy.SendMessage(completionMessage, message.getDependencyMinerLargeMessageProxy()));
 
 		return this;
+	}
+
+	private void sendResults(TaskMessage message, DependencyMiner.Result result){
+		LargeMessageProxy.LargeMessage completionMessage =
+				new DependencyMiner.CompletionMessage(
+						this.getContext().getSelf(),
+						result);
+		this.largeMessageProxy.tell(
+				new LargeMessageProxy.SendMessage(completionMessage,
+				message.getDependencyMinerLargeMessageProxy()));
 	}
 }

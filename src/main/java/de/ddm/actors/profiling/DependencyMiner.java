@@ -10,6 +10,8 @@ import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.ddm.actors.patterns.LargeMessageProxy;
+import de.ddm.helper.CSVTable;
+import de.ddm.helper.EmptyPair;
 import de.ddm.serialization.AkkaSerializable;
 import de.ddm.singletons.InputConfigurationSingleton;
 import de.ddm.singletons.SystemConfigurationSingleton;
@@ -17,11 +19,10 @@ import de.ddm.structures.InclusionDependency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
@@ -69,7 +70,20 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	public static class CompletionMessage implements Message {
 		private static final long serialVersionUID = -7642425159675583598L;
 		ActorRef<DependencyWorker.Message> dependencyWorker;
-		int result;
+		Result result;
+	}
+
+	////////////////////////
+	// Result Format      //
+	////////////////////////
+
+	@Getter
+	@Setter
+	@NoArgsConstructor
+	public static class Result{
+		InclusionDependency inclusionDependency = null;
+		CSVTable table = null;
+		List<EmptyPair> pairs = null;
 	}
 
 	////////////////////////
@@ -150,8 +164,24 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	private Behavior<Message> handle(BatchMessage message) {
 		// Ignoring batch content for now ... but I could do so much with it.
 
-		if (message.getBatch().size() != 0)
+		if (message.getBatch().size() != 0) {
 			this.inputReaders.get(message.getId()).tell(new InputReader.ReadBatchMessage(this.getContext().getSelf()));
+
+			this.tasks.add(new DependencyWorker.CreateTableTask(
+					inputFiles[message.id].getPath(),
+					message.batch));
+		}
+
+
+
+
+		//TO DO: Handle batch
+		// give batch to dependency worker
+		// problem only received part of one table
+
+
+
+
 		return this;
 	}
 
@@ -162,8 +192,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 			this.getContext().watch(dependencyWorker);
 			// The worker should get some work ... let me send her something before I figure out what I actually want from her.
 			// I probably need to idle the worker for a while, if I do not have work for it right now ... (see master/worker pattern)
-
-			dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, 42));
+			dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, nextTask()));
 		}
 		return this;
 	}
@@ -172,6 +201,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		ActorRef<DependencyWorker.Message> dependencyWorker = message.getDependencyWorker();
 		// If this was a reasonable result, I would probably do something with it and potentially generate more work ... for now, let's just generate a random, binary IND.
 
+		//TODO: receive results
+		/*
 		if (this.headerLines[0] != null) {
 			Random random = new Random();
 			int dependent = random.nextInt(this.inputFiles.length);
@@ -186,10 +217,35 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 			this.resultCollector.tell(new ResultCollector.ResultMessage(inds));
 		}
+
+		 */
+		if(message.result != null) {
+			if(message.result.inclusionDependency != null) {
+				List<InclusionDependency> ids = new ArrayList<>();
+				ids.add(message.result.inclusionDependency);
+				this.resultCollector.tell(new ResultCollector.ResultMessage(ids));
+			}
+			if(message.result.pairs != null){
+				for(EmptyPair p: message.result.pairs){
+					tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
+							this.tables.get(p.getColumnFile1()),
+							this.tables.get(p.getColumnFile2())
+					)));
+				}
+			}
+			if(message.result.table != null){
+				CSVTable res = message.result.table;
+				for(CSVTable t: this.tables.values()){
+					tasks.add(new DependencyWorker.MakePairsTask(res.toEmpty(), t.toEmpty()));
+				}
+				this.tables.put(res.getFilepath(), res);
+			}
+		}
 		// I still don't know what task the worker could help me to solve ... but let me keep her busy.
 		// Once I found all unary INDs, I could check if this.discoverNaryDependencies is set to true and try to detect n-ary INDs as well!
+		//TODO:  start next Task
 
-		dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, 42));
+		dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy,  nextTask()));
 
 		// At some point, I am done with the discovery. That is when I should call my end method. Because I do not work on a completable task yet, I simply call it after some time.
 		if (System.currentTimeMillis() - this.startTime > 2000000)
@@ -208,4 +264,21 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		this.dependencyWorkers.remove(dependencyWorker);
 		return this;
 	}
+
+
+
+	private final HashMap<String, CSVTable> tables = new HashMap<>();
+	private final Queue<DependencyWorker.Task> tasks = new ArrayDeque<>();
+
+	private DependencyWorker.Task nextTask(){
+		DependencyWorker.Task task = tasks.poll();
+		if(task == null){
+			return new DependencyWorker.WaitTask();
+		}
+		return task;
+	}
+
+
+
+
 }
