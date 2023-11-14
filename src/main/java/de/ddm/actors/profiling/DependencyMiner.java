@@ -23,6 +23,8 @@ import lombok.Setter;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
@@ -192,8 +194,10 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 			this.getContext().watch(dependencyWorker);
 			// The worker should get some work ... let me send her something before I figure out what I actually want from her.
 			// I probably need to idle the worker for a while, if I do not have work for it right now ... (see master/worker pattern)
-			dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, nextTask()));
+			//dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, nextTask()));
+			nextTask(dependencyWorker);
 		}
+		checkAllWorkersRunning();
 		return this;
 	}
 
@@ -245,7 +249,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		// Once I found all unary INDs, I could check if this.discoverNaryDependencies is set to true and try to detect n-ary INDs as well!
 		//TODO:  start next Task
 
-		dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy,  nextTask()));
+		//dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy,  nextTask()));
+		nextTask(dependencyWorker);
 
 		// At some point, I am done with the discovery. That is when I should call my end method. Because I do not work on a completable task yet, I simply call it after some time.
 		if (System.currentTimeMillis() - this.startTime > 2000000)
@@ -286,6 +291,22 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		//this.currentlyDoing
 		dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, task));
 		this.currentlyDoing.put(this.dependencyWorkers.indexOf(dependencyWorker), task);
+	}
+
+	private void checkAllWorkersRunning(){
+		if(this.dependencyWorkers.size() != this.currentlyDoing.size()){
+			/*
+			IntStream.range(start, end)
+					.boxed()
+					.collect(Collectors.toList());
+
+			 */
+			IntStream.range(0, this.dependencyWorkers.size())
+							.boxed()
+							.filter(e->!(this.currentlyDoing.containsKey(e)))
+							.map(this.dependencyWorkers::get)
+							.peek(this::nextTask);
+		}
 	}
 
 	private final HashMap<Integer, DependencyWorker.Task> currentlyDoing = new HashMap<>();
