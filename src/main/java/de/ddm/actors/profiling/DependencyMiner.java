@@ -261,6 +261,9 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 	private Behavior<Message> handle(Terminated signal) {
 		ActorRef<DependencyWorker.Message> dependencyWorker = signal.getRef().unsafeUpcast();
+		int i = this.dependencyWorkers.indexOf(dependencyWorker);
+		this.tasks.add(this.currentlyDoing.get(i));
+		this.currentlyDoing.remove(i);
 		this.dependencyWorkers.remove(dependencyWorker);
 		return this;
 	}
@@ -277,6 +280,15 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		}
 		return task;
 	}
+
+	private void nextTask(ActorRef<DependencyWorker.Message> dependencyWorker){
+		DependencyWorker.Task task = nextTask();
+		//this.currentlyDoing
+		dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, task));
+		this.currentlyDoing.put(this.dependencyWorkers.indexOf(dependencyWorker), task);
+	}
+
+	private final HashMap<Integer, DependencyWorker.Task> currentlyDoing = new HashMap<>();
 
 
 
