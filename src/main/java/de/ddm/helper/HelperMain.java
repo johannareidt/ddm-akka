@@ -145,9 +145,18 @@ public class HelperMain {
                                         id.getReferencedAttributes()[0]))
                         .collect(Collectors.toList())
                         .get(0));
-        System.out.println(pre+" firstIsSubSetToSecond "+analyzePair.firstIsSubSetToSecond());
-        System.out.println(pre+" firstInSecond "+analyzePair.firstInSecond());
-        System.out.println(pre+" firstNotInSecond "+analyzePair.firstNotInSecond());
+        analyzePair.logged(pre);
+        /*
+        System.out.println(pre+" matched: firstIsSubSetToSecond "+analyzePair.firstIsSubSetToSecond());
+        System.out.println(pre+" matched: firstInSecond "+analyzePair.firstInSecond());
+        System.out.println(pre+" matched: firstNotInSecond "+analyzePair.firstNotInSecond());
+
+
+        System.out.println(pre+" otherway: firstIsSubSetToSecond "+analyzePair.firstIsSubSetToSecond());
+        System.out.println(pre+" otherway: firstInSecond "+analyzePair.firstInSecond());
+        System.out.println(pre+" otherway: firstNotInSecond "+analyzePair.firstNotInSecond());
+
+         */
         /*
         System.out.println(pre+" secondIsSubSetToFirst "+analyzePair.secondIsSubSetToFirst());
         System.out.println(pre+" secondInFirst "+analyzePair.secondInFirst());

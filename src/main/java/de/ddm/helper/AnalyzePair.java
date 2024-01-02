@@ -27,14 +27,46 @@ public class AnalyzePair implements Serializable {
     }
 
 
-    public  InclusionDependency getInclusionDependency(){
+    public void logged(String pre){
+
         boolean c1SubToc2 = false;
         boolean c2SubToc1 = false;
 
+        int min = Math.min(this.column1.getEntries().size(), this.column2.getEntries().size());
+
         int firstInSecond = firstInSecond();
         int firstNotInSecond = firstNotInSecond();
+
         int secondInFirst = secondInFirst();
         int secondNotInFirst = secondNotInFirst();
+        System.out.println(pre+ " Pair: firstInSecond: "+firstInSecond);
+        System.out.println(pre+ " Pair: firstInSecond>0: "+(firstInSecond>0));
+        System.out.println(pre+ " Pair: firstInSecond*0.1: "+(firstInSecond*0.1));
+        System.out.println(pre+ " Pair: firstNotInSecond: "+firstNotInSecond);
+        System.out.println(pre+ " Pair: firstNotInSecond<=firstInSecond*0.1: "+(firstNotInSecond<=firstInSecond*0.1));
+        System.out.println(pre+ " Pair: secondInFirst: "+secondInFirst);
+        System.out.println(pre+ " Pair: secondInFirst>0: "+(secondInFirst>0));
+        System.out.println(pre+ " Pair: secondInFirst*0.1: "+(secondInFirst*0.1));
+        System.out.println(pre+ " Pair: secondNotInFirst: "+secondNotInFirst);
+        System.out.println(pre+ " Pair: secondNotInFirst<=secondInFirst*0.1: "+(secondNotInFirst<=secondInFirst*0.1));
+
+    }
+
+    public InclusionDependency getInclusionDependency(){
+        boolean c1SubToc2 = false;
+        boolean c2SubToc1 = false;
+
+        int min = Math.min(this.column1.getEntries().size(), this.column2.getEntries().size());
+
+        int firstInSecond = firstInSecond();
+        int firstNotInSecond = firstNotInSecond();
+
+        int secondInFirst = secondInFirst();
+        int secondNotInFirst = secondNotInFirst();
+
+        System.out.println();
+        System.out.println("Pair: "+this.toEmpty().toString());
+        System.out.println();
 
         if(firstInSecond>0 && firstNotInSecond<=firstInSecond*0.1){
             c1SubToc2 = true;
