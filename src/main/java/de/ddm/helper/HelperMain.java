@@ -8,10 +8,12 @@ import de.ddm.actors.profiling.InputReader;
 import de.ddm.singletons.DomainConfigurationSingleton;
 import de.ddm.singletons.InputConfigurationSingleton;
 import de.ddm.structures.InclusionDependency;
+import jnr.ffi.annotations.In;
+import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class HelperMain {
 
@@ -39,7 +41,7 @@ public class HelperMain {
                 break;
             batch.add(line);
         }
-
+        //System.out.println(batch);
         return batch;
     }
 
@@ -55,11 +57,15 @@ public class HelperMain {
         //List<List<String[]>> res = new ArrayList<>();
         List<CSVTable> tables = new ArrayList<>();
         List<String[]> last = new ArrayList<>();
+
+        String[] header = getHeader(new File(filepath));
+
+        //System.out.println(filepath + Arrays.toString(header));
         last = readBatch(reader);
         while (last.size() != 0){
             //res.add(last);
             //Create Table Task
-            tables.add(new CSVTable(filepath, last));
+            tables.add(new CSVTable(filepath, last, header));
             tables.get(tables.size()-1).split();
             last = readBatch(reader);
         }
@@ -82,7 +88,7 @@ public class HelperMain {
     public static List<CSVReader> getReaders(List<File> files) throws CsvValidationException, IOException {
         List<CSVReader> readers = new ArrayList<>();
         for (File f: files){
-            System.out.println(Arrays.toString(getHeader(f)));
+            //System.out.println(Arrays.toString(getHeader(f)));
             readers.add(getReader(f));
         }
         return readers;
@@ -106,23 +112,29 @@ public class HelperMain {
                 EmptyTable t1 = csvTables1.get(0).toEmpty();
                 EmptyTable t2 = csvTables2.get(0).toEmpty();
 
-                List<EmptyPair> pairs = new ArrayList<>();
-                for(String col1: t1.getHeader()){
-                    for(String col2: t2.getHeader()){
-                        pairs.add(new EmptyPair(t1.getFilepath(), t2.getFilepath(), col1, col2));
+                if(!Objects.equals(t1.getFilepath(), t2.getFilepath())) {
+
+                    List<EmptyPair> pairs = new ArrayList<>();
+                    for (String col1 : t1.getHeader()) {
+                        for (String col2 : t2.getHeader()) {
+                            pairs.add(new EmptyPair(t1.getFilepath(), t2.getFilepath(), col1, col2));
+                        }
                     }
+                    //result.setPairs(pairs);
+                    //return result;
+                    res.addAll(pairs);
                 }
-                //result.setPairs(pairs);
-                //return result;
-                res.addAll(pairs);
             }
         }
         return res;
     }
 
-    public static HashMap<EmptyPair, InclusionDependency> analyzeTask(List<EmptyPair> pairs, HashMap<String, List<CSVTable>> tables){
-        HashMap<EmptyPair, InclusionDependency> res =new HashMap<>();
+    public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(List<EmptyPair> pairs, HashMap<String, List<CSVTable>> tables){
+        HashMap<EmptyPair, List<InclusionDependency>> res =new HashMap<>();
         for(EmptyPair p: pairs){
+            if(!res.containsKey(p)){
+                res.put(p, new ArrayList<>());
+            }
             for (CSVTable t1 : tables.get(p.getColumnFile1())){
                 for (CSVTable t2 : tables.get(p.getColumnFile2())){
                     AnalyzePair analyzePair = p.transform(
@@ -130,11 +142,36 @@ public class HelperMain {
                             t2
                     );
 
-                    InclusionDependency id = analyzePair.firstIsSubSetToSecond();
-                    if(id == null){
-                        id = analyzePair.secondIsSubSetToFirst();
+                    InclusionDependency id1 = analyzePair.firstIsSubSetToSecond();
+                    res.get(p).add(id1);
+                    /*
+                    if(id1 != null) {
+                        if(!res.get(p).contains(id1)) {
+                            res.get(p).add(id1);
+                        }
                     }
-                    res.put(p, id);
+
+                     */
+                    InclusionDependency id2 = analyzePair.secondIsSubSetToFirst();
+                    res.get(p).add(id2);
+
+                    /*
+                    if(id2 != null) {
+                        if(!res.get(p).contains(id2)) {
+                            res.get(p).add(id2);
+                        }
+                    }
+                    if(id1  == null&& id2==null){
+                        if(!res.get(p).contains(null)) {
+                            res.get(p).add(null);
+                        }
+                    }
+                     */
+
+
+
+
+
                 }
             }
 
@@ -142,11 +179,38 @@ public class HelperMain {
         return res;
     }
 
+    public static List<String> getResults() throws IOException {
+        String resultspath = "C:\\Users\\johan\\Documents\\GitHub\\ddm-akka\\data\\results.txt";
+        // Open the file
+        FileInputStream fstream = new FileInputStream(resultspath);
+        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+
+        List<String> lines  = new ArrayList<>();
+        String line;
+
+        //Read File Line By Line
+        while ((line = br.readLine()) != null)   {
+            // Print the content on the console - do what you want to do
+            lines.add(line);
+        }
+
+        //Close the input stream
+        fstream.close();
+        return lines;
+    }
+
 
 
     public static void main(String[] args) {
+        List<String> solution = new ArrayList<>();
+        try {
+            solution = getResults();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         File folder = new File("C:\\Users\\johan\\Documents\\GitHub\\ddm-akka\\data\\TPCH");
         List<File> files  = List.of(Objects.requireNonNull(folder.listFiles()));
+        //System.out.println(files);
         HashMap<String, List<CSVTable>> tables = new HashMap<>();
         try {
             tables = read(files);
@@ -154,7 +218,231 @@ public class HelperMain {
             throw new RuntimeException(e);
         }
         List<EmptyPair> pairs = makePairs(tables);
-        HashMap<EmptyPair, InclusionDependency> results = analyzeTask(pairs, tables);
+
+        //System.out.println(pairs);
+        HashMap<EmptyPair, List<InclusionDependency>> results = analyzeTask(pairs, tables);
+        //System.out.println(results);
+
+        /*
+        for(EmptyPair p: results.keySet()){
+            List<InclusionDependency> l = results.get(p);
+            if(l.isEmpty()){
+                System.out.println("EMPTY: "+ p);
+            }
+
+        }
+
+         */
+
+
+        /*
+        for(EmptyPair p: results.keySet()){
+            List<InclusionDependency> l = results.get(p);
+            if(!l.isEmpty()){
+                if(l.contains(null)){
+                    System.out.println("Also EMPTY: "+ p.columnName1+"->"+p.columnName2+":"+p.columnName1+"->"+p.columnName2);
+                    for(InclusionDependency id : l) {
+                        if(id != null) {
+                            if (solution.contains(id.toString())) {
+                                System.out.println("Is in results: " + solution.contains(id.toString()));
+                                System.out.println("List: "+l);
+                            }
+                        }else{
+                            System.out.println("null");
+                        }
+                    }
+                }
+            }
+
+        }
+
+         */
+        /*
+        for(EmptyPair p: results.keySet()){
+            List<InclusionDependency> l = results.get(p);
+            if(!l.isEmpty()){
+                if(!l.contains(null)){
+                    System.out.println("DEFINITELY: "+ l.get(0));
+                    System.out.println("Is in results: "+solution.contains(l.get(0).toString()));
+                }
+            }
+        }
+
+         */
+
+        HashMap<InclusionDependency, Map<String, Long>> countingMap = new HashMap<>();
+
+        List<InclusionDependency> match = new ArrayList<>();
+        List<InclusionDependency> falseMatch = new ArrayList<>();
+        List<InclusionDependency> shouldBeMatch = new ArrayList<>();
+        List<InclusionDependency> correctNotMatch = new ArrayList<>();
+
+        for(EmptyPair p: results.keySet()){
+            List<InclusionDependency> l = results.get(p);
+            if(!l.isEmpty()){
+
+                InclusionDependency temp1 = new InclusionDependency(new File(p.getColumnFile1()), new String[]{p.getColumnName1()},
+                        new File(p.getColumnFile2()), new String[]{p.getColumnName2()});
+                InclusionDependency temp2 = new InclusionDependency(new File(p.getColumnFile2()), new String[]{p.getColumnName2()},
+                        new File(p.getColumnFile1()), new String[]{p.getColumnName1()});
+
+
+                /*
+                int nulloccurrences = Collections.frequency(l, null);
+                int temp1occurrences = Collections.frequency(l, temp1);
+                int temp2occurrences = Collections.frequency(l, temp2);
+
+                 */
+
+
+                Map<String, Long> counts =
+                        results.get(p).stream().collect(Collectors.groupingBy(e->{if(e == null){
+                            return "null";
+                        } return e.toString();}, Collectors.counting()));
+
+                countingMap.put(temp1, counts);
+                countingMap.put(temp2, counts);
+
+
+
+                if(counts.keySet().size()==1 && counts.containsKey("null")
+                ){
+                    if(solution.contains(temp1.toString())){
+                        shouldBeMatch.add(temp1);
+                    }else {
+                        correctNotMatch.add(temp1);
+                    }
+                    if(solution.contains(temp2.toString())){
+                        shouldBeMatch.add(temp2);
+                    }else {
+                        correctNotMatch.add(temp2);
+                    }
+                }else if(!counts.containsKey("null")){
+                    if(solution.contains(temp1.toString())){
+                        match.add(temp1);
+                    }else {
+                        falseMatch.add(temp1);
+                    }
+                    if(solution.contains(temp2.toString())){
+                        match.add(temp2);
+                    }else {
+                        falseMatch.add(temp1);
+                    }
+                }else  {
+                    Map.Entry<String, Long> maxEntry = Collections.max(counts.entrySet(),
+                            Map.Entry.comparingByValue());
+                    if(Objects.equals(maxEntry.getKey(), temp1.toString())){
+                        if(solution.contains(temp1.toString())){
+                            match.add(temp1);
+                        }else {
+                            falseMatch.add(temp1);
+                        }
+
+                    } else if (Objects.equals(maxEntry.getKey(), temp2.toString())) {
+
+                        if(solution.contains(temp2.toString())){
+                            match.add(temp2);
+                        }else {
+                            falseMatch.add(temp1);
+                        }
+                    }else{
+                        if(solution.contains(temp1.toString())){
+                            shouldBeMatch.add(temp1);
+                        }else {
+                            correctNotMatch.add(temp1);
+                        }
+                        if(solution.contains(temp2.toString())){
+                            shouldBeMatch.add(temp2);
+                        }else {
+                            correctNotMatch.add(temp2);
+                        }
+                    }
+                }
+
+                /*
+                    if(counts.get(temp1.toString()) >= counts.get("null")){
+                    if(solution.contains(temp1.toString())){
+                        match.add(temp1);
+                    }else {
+                        falseMatch.add(temp1);
+                    }
+                }else if(counts.get(temp2.toString()) >= counts.get("null")){
+                    if(solution.contains(temp2.toString())){
+                        match.add(temp2);
+                    }else {
+                        falseMatch.add(temp1);
+                    }
+                }else{
+                    if()
+                }
+
+                 */
+
+                /*
+                if (!counts.containsKey("null")) {
+                    if(solution.contains(temp1.toString())){
+                        match.add(p);
+                    }
+                    /*
+                    if(temp1occurrences >= l.size()/2 -1){
+                        if(solution.contains(temp1.toString())){
+                            match.add(p);
+                        }
+                    }
+                    if(temp2occurrences >= l.size()/2 -1){
+                        if(solution.contains(temp2.toString())){
+                            match.add(p);
+                        }
+                    }
+
+
+                 */
+
+                /*
+
+                    if(solution.contains(temp2.toString())){
+                        match.add(p);
+                    }else {
+                        falseMatch.add(p);
+                    }
+                    //System.out.println("DEFINITELY: "+ l.get(0));
+                    //System.out.println("Is in results: "+solution.contains(l.get(0).toString()));
+                } else{
+
+
+                }
+
+                 */
+            }
+        }
+
+        System.out.println("match: length: "+match.size());
+        for(InclusionDependency p: match) {
+            //if(counts.get()) {
+                System.out.println("match: " + p);
+                System.out.println("match: List: " +  countingMap.get(p));
+            //}
+        }
+
+        System.out.println("correctNotMatch: length: "+correctNotMatch.size());
+        for(InclusionDependency p: correctNotMatch) {
+            if(countingMap.get(p).keySet().size()!=1) {
+                System.out.println("correctNotMatch: " + p);
+                System.out.println("correctNotMatch: List: " + countingMap.get(p));
+            }
+        }
+
+        System.out.println("falseMatch: length: "+falseMatch.size());
+        for(InclusionDependency p: falseMatch) {
+            System.out.println("falseMatch: " + p);
+            System.out.println("falseMatch: List: " +  countingMap.get(p));
+        }
+        System.out.println("shouldBeMatch: length: "+shouldBeMatch.size());
+        for(InclusionDependency p: shouldBeMatch) {
+            System.out.println("shouldBeMatch: " + p);
+            System.out.println("shouldBeMatch: List: " +  countingMap.get(p));
+        }
+
 
 
 

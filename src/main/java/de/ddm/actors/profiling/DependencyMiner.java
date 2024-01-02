@@ -85,7 +85,9 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	@Setter
 	@NoArgsConstructor
 	public static class Result{
-		InclusionDependency inclusionDependency = null;
+		boolean hasResult = false;
+		EmptyPair emptyPair = null;
+		List<InclusionDependency> inclusionDependencies = new ArrayList<>();
 		CSVTable table = null;
 		List<EmptyPair> pairs = null;
 	}
@@ -176,7 +178,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 			this.tasks.add(new DependencyWorker.CreateTableTask(
 					inputFiles[message.id].getPath(),
-					message.batch));
+					message.batch,
+					this.headerLines[message.id]));
 		}else{
 			System.out.println("Batch zero");
 
@@ -232,9 +235,11 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 		 */
 		if(message.result != null) {
-			if(message.result.inclusionDependency != null) {
-				List<InclusionDependency> ids = new ArrayList<>();
-				ids.add(message.result.inclusionDependency);
+			if(message.result.hasResult) {
+				List<InclusionDependency> ids = new ArrayList<>(message.result.inclusionDependencies);
+				if(message.result.inclusionDependencies.isEmpty()){
+					ids.add(null);
+				}
 				this.resultCollector.tell(new ResultCollector.ResultMessage(ids));
 			}
 			if(message.result.pairs != null){

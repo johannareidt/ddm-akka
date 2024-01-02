@@ -66,11 +66,34 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		@Override
 		DependencyMiner.Result handle() {
 			DependencyMiner.Result result = new DependencyMiner.Result();
+			result.setEmptyPair(analyzePair.toEmpty());
+			result.setHasResult(true);
 			InclusionDependency id = analyzePair.firstIsSubSetToSecond();
-			if(id == null){
-				id = analyzePair.secondIsSubSetToFirst();
+			if(id != null) {
+				result.getInclusionDependencies().add(id);
 			}
-			result.setInclusionDependency(id);
+			id = analyzePair.secondIsSubSetToFirst();
+			if(id != null) {
+				result.getInclusionDependencies().add(id);
+			}
+
+			InclusionDependency id1 = analyzePair.firstIsSubSetToSecond();
+			if(id1 != null) {
+				if(!result.getInclusionDependencies().contains(id1)) {
+					result.getInclusionDependencies().add(id1);
+				}
+			}
+			InclusionDependency id2 = analyzePair.secondIsSubSetToFirst();
+			if(id2 != null) {
+				if(!result.getInclusionDependencies().contains(id2)) {
+					result.getInclusionDependencies().add(id2);
+				}
+			}
+			if(id1  == null&& id2==null){
+				if(!result.getInclusionDependencies().contains(null)) {
+					result.getInclusionDependencies().add(null);
+				}
+			}
 			return result;
 		}
 	}
@@ -78,15 +101,17 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 	public static class CreateTableTask extends Task{
 		private final List<String[]> batch;
 		private final String filepath;
+		private final String[] header;
 
-		CreateTableTask(String filepath,List<String[]> batch){
+		CreateTableTask(String filepath,List<String[]> batch, String[] header){
 			this.filepath = filepath;
 			this.batch = batch;
+			this.header = header;
 		}
 		@Override
 		DependencyMiner.Result handle() {
 			DependencyMiner.Result result = new DependencyMiner.Result();
-			result.table = new CSVTable(filepath, batch);
+			result.table = new CSVTable(filepath, batch, header);
 			result.table.split();
 			return result;
 		}

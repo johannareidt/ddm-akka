@@ -21,5 +21,13 @@ public class EmptyPair {
         return null;
     }
 
-
+    @Override
+    public String toString() {
+        return "EmptyPair{" +
+                "columnFile1='" + columnFile1 + '\'' +
+                ", columnFile2='" + columnFile2 + '\'' +
+                ", columnName1='" + columnName1 + '\'' +
+                ", columnName2='" + columnName2 + '\'' +
+                '}';
+    }
 }

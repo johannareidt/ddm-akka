@@ -25,14 +25,24 @@ public class CSVTable implements Serializable {
     private List<String[]> myEntries;
     @Getter
     private final HashMap<String, CSVColumn> columns;
-    public CSVTable(String filepath, List<String[]>  myEntries){
+    @Getter
+    private final String[] header;
+
+    public CSVTable(String filepath, List<String[]>  myEntries, String[] header){
         this.filepath = filepath;
         this.myEntries = myEntries;
         this.columns = new HashMap<>();
+        this.header = header;
     }
 
     public String[] getColumnNames(){
-        return myEntries.get(0);
+        if(header == null){
+            return new String[]{};
+        }
+        if(header.length == 0){
+            return new String[]{};
+        }
+        return header;
     }
 
     public int getNumberOfColumns(){

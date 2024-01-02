@@ -40,4 +40,8 @@ public class AnalyzePair implements Serializable {
         return null;
     }
 
+    public EmptyPair toEmpty(){
+        return new EmptyPair(column1.getFilePath(), column2.getFilePath(), column1.getColumnName(), column2.getColumnName());
+    }
+
 }
