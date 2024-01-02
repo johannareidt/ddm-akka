@@ -33,7 +33,8 @@ public class AnalyzePair implements Serializable {
     }
 
     public InclusionDependency secondIsSubSetToFirst(){
-        if(this.column2.containsAll(this.column1)){
+        //biglist.containsAll(littleList)
+        if(this.column1.containsAll(this.column2)){
             return new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
                     new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()});
         }

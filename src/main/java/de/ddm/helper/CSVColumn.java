@@ -17,10 +17,10 @@ public class CSVColumn implements Serializable {
 
     private final HashSet<String> entries;
 
-    public CSVColumn(String filePath, String columnName, String[] entries){
+    public CSVColumn(String filePath, String columnName, List<String> entries){
         this.filePath = filePath;
         this.columnName = columnName;
-        this.entries = new HashSet<>(Arrays.asList(entries));
+        this.entries = new HashSet<>(entries);
     }
 
     /*
@@ -35,7 +35,7 @@ public class CSVColumn implements Serializable {
     }
 
 
-    public Collection<String> getEntries() {
+    public HashSet<String> getEntries() {
         return this.entries;
     }
 }

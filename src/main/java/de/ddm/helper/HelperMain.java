@@ -19,6 +19,8 @@ public class HelperMain {
 
     static final int batchSize = DomainConfigurationSingleton.get().getInputReaderBatchSize();
 
+    static final HashMap<String, List<CSVColumn>> columns = new HashMap<>();
+
 
     public static CSVReader getReader(File inputFile) throws IOException, CsvValidationException {
         CSVReader reader = InputConfigurationSingleton.get().createCSVReader(inputFile);
@@ -131,7 +133,7 @@ public class HelperMain {
 
     public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(List<EmptyPair> pairs, HashMap<String, List<CSVTable>> tables){
         HashMap<EmptyPair, List<InclusionDependency>>res =new HashMap<>();
-        HashMap<String, List<CSVColumn>> columns = new HashMap<>();
+        columns.clear();
         for(String path: tables.keySet()){
             columns.put(path, new ArrayList<>());
             HashMap<String, List<CSVColumn>> tempTableColumns = new HashMap<>();
@@ -148,7 +150,7 @@ public class HelperMain {
                 for (CSVColumn c : tempTableColumns.get(cn)) {
                     entries.addAll(c.getEntries());
                 }
-                columns.get(path).add(new CSVColumn(path, cn, entries.toArray(new String[]{})));
+                columns.get(path).add(new CSVColumn(path, cn, entries));
             }
 
 
@@ -406,23 +408,43 @@ public class HelperMain {
         }
 
         System.out.println("correctNotMatch: length: "+correctNotMatch.size());
+        /*
         for(InclusionDependency p: correctNotMatch) {
             System.out.println("correctNotMatch: " + p);
             //if(countingMap.get(p).keySet().size()!=1) {
             //    System.out.println("correctNotMatch: " + p);
-                System.out.println("correctNotMatch: List: " + countingMap.get(p));
-            }
+            //    System.out.println("correctNotMatch: List: " + countingMap.get(p));
+            //}
         }
+
+         */
 
         System.out.println("falseMatch: length: "+falseMatch.size());
         for(InclusionDependency p: falseMatch) {
             System.out.println("falseMatch: " + p);
-            System.out.println("falseMatch: List: " +  countingMap.get(p));
+            System.out.println(columns.get(p.getDependentFile().getPath())
+                    .stream().filter(column ->
+                            Objects.equals(column.getColumnName(),
+                                    p.getDependentAttributes()[0])).collect(Collectors.toList()));
+            System.out.println(columns.get(p.getReferencedFile().getPath())
+                    .stream().filter(column ->
+                            Objects.equals(column.getColumnName(),
+                                    p.getReferencedAttributes()[0])).collect(Collectors.toList()));
+
+            //System.out.println("falseMatch: List: " +  countingMap.get(p));
         }
         System.out.println("shouldBeMatch: length: "+shouldBeMatch.size());
         for(InclusionDependency p: shouldBeMatch) {
             System.out.println("shouldBeMatch: " + p);
-            System.out.println("shouldBeMatch: List: " +  countingMap.get(p));
+            System.out.println(columns.get(p.getDependentFile().getPath())
+                    .stream().filter(column ->
+                            Objects.equals(column.getColumnName(),
+                                    p.getDependentAttributes()[0])).collect(Collectors.toList()));
+            System.out.println(columns.get(p.getReferencedFile().getPath())
+                    .stream().filter(column ->
+                            Objects.equals(column.getColumnName(),
+                                    p.getReferencedAttributes()[0])).collect(Collectors.toList()));
+            //System.out.println("shouldBeMatch: List: " +  countingMap.get(p));
         }
 
 

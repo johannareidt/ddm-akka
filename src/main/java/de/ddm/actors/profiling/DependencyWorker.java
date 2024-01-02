@@ -127,7 +127,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			for(CSVColumn c: columns){
 				entries.addAll(c.getEntries());
 			}
-			result.column = new CSVColumn(path, cn, entries.toArray(new String[]{}));
+			result.column = new CSVColumn(path, cn, entries);
 			return result;
 		}
 	}

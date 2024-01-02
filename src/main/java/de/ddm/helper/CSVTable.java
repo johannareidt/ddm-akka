@@ -83,7 +83,7 @@ public class CSVTable implements Serializable {
         }
         for(int i=0; i<s; i++){
             this.columns.put(getColumnName(i),
-                    new CSVColumn(this.filepath, getColumnName(i),temp.get(i).toArray(String[]::new)));
+                    new CSVColumn(this.filepath, getColumnName(i),temp.get(i)));
         }
         this.myEntries = null;
     }

@@ -193,7 +193,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 					message.batch,
 					this.headerLines[message.id]));
 		}else{
-			System.out.println("Batch zero");
+			//System.out.println("Batch zero");
 			String path = inputFiles[message.id].getPath();
 			HashMap<String, List<CSVColumn>> columns = new HashMap<>();
 			if(this.tables.containsKey(path)) {
