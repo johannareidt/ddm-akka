@@ -130,51 +130,55 @@ public class HelperMain {
     }
 
     public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(List<EmptyPair> pairs, HashMap<String, List<CSVTable>> tables){
-        HashMap<EmptyPair, List<InclusionDependency>> res =new HashMap<>();
-        for(EmptyPair p: pairs){
-            if(!res.containsKey(p)){
-                res.put(p, new ArrayList<>());
-            }
-            for (CSVTable t1 : tables.get(p.getColumnFile1())){
-                for (CSVTable t2 : tables.get(p.getColumnFile2())){
-                    AnalyzePair analyzePair = p.transform(
-                            t1,
-                            t2
-                    );
-
-                    InclusionDependency id1 = analyzePair.firstIsSubSetToSecond();
-                    res.get(p).add(id1);
-                    /*
-                    if(id1 != null) {
-                        if(!res.get(p).contains(id1)) {
-                            res.get(p).add(id1);
-                        }
+        HashMap<EmptyPair, List<InclusionDependency>>res =new HashMap<>();
+        HashMap<String, List<CSVColumn>> columns = new HashMap<>();
+        for(String path: tables.keySet()){
+            columns.put(path, new ArrayList<>());
+            HashMap<String, List<CSVColumn>> tempTableColumns = new HashMap<>();
+            for (CSVTable t : tables.get(path)) {
+                for (String cn : t.getColumnNames()) {
+                    if (!tempTableColumns.containsKey(cn)) {
+                        tempTableColumns.put(cn, new ArrayList<>());
                     }
-
-                     */
-                    InclusionDependency id2 = analyzePair.secondIsSubSetToFirst();
-                    res.get(p).add(id2);
-
-                    /*
-                    if(id2 != null) {
-                        if(!res.get(p).contains(id2)) {
-                            res.get(p).add(id2);
-                        }
-                    }
-                    if(id1  == null&& id2==null){
-                        if(!res.get(p).contains(null)) {
-                            res.get(p).add(null);
-                        }
-                    }
-                     */
-
-
-
-
-
+                    tempTableColumns.get(cn).add(t.getColumn(cn));
                 }
             }
+            for(String cn: tempTableColumns.keySet()) {
+                ArrayList<String> entries = new ArrayList<>();
+                for (CSVColumn c : tempTableColumns.get(cn)) {
+                    entries.addAll(c.getEntries());
+                }
+                columns.get(path).add(new CSVColumn(path, cn, entries.toArray(new String[]{})));
+            }
 
+
+
+        }
+
+        for(String path1: columns.keySet()){
+            for(String path2: columns.keySet()){
+                if(!Objects.equals(path1, path2)) {
+                    for(CSVColumn c1: columns.get(path1)) {
+                        for(CSVColumn c2: columns.get(path2)) {
+                            AnalyzePair analyzePair = new AnalyzePair(c1, c2);
+                            ArrayList<InclusionDependency> temp = new ArrayList<>();
+                            InclusionDependency id1 = analyzePair.firstIsSubSetToSecond();
+                            if (id1 != null) {
+                                temp.add(id1);
+                            }
+                            InclusionDependency id2 = analyzePair.secondIsSubSetToFirst();
+                            if (id2 != null) {
+                                temp.add(id2);
+                            }
+                            if (id1 == null && id2 == null) {
+                                temp.add(null);
+                            }
+
+                            res.put(analyzePair.toEmpty(), temp);
+                        }
+                    }
+                }
+            }
         }
         return res;
     }
@@ -270,7 +274,7 @@ public class HelperMain {
 
          */
 
-        HashMap<InclusionDependency, Map<String, Long>> countingMap = new HashMap<>();
+        //HashMap<InclusionDependency, Map<String, Long>> countingMap = new HashMap<>();
 
         List<InclusionDependency> match = new ArrayList<>();
         List<InclusionDependency> falseMatch = new ArrayList<>();
@@ -295,6 +299,7 @@ public class HelperMain {
                  */
 
 
+                /*
                 Map<String, Long> counts =
                         results.get(p).stream().collect(Collectors.groupingBy(e->{if(e == null){
                             return "null";
@@ -302,10 +307,12 @@ public class HelperMain {
 
                 countingMap.put(temp1, counts);
                 countingMap.put(temp2, counts);
+                
+                 */
 
 
 
-                if(counts.keySet().size()==1 && counts.containsKey("null")
+                if(l.contains(null)
                 ){
                     if(solution.contains(temp1.toString())){
                         shouldBeMatch.add(temp1);
@@ -317,46 +324,20 @@ public class HelperMain {
                     }else {
                         correctNotMatch.add(temp2);
                     }
-                }else if(!counts.containsKey("null")){
+                }else if(l.contains(temp1)){
                     if(solution.contains(temp1.toString())){
                         match.add(temp1);
                     }else {
                         falseMatch.add(temp1);
                     }
+                }else if(l.contains(temp2)){
                     if(solution.contains(temp2.toString())){
                         match.add(temp2);
                     }else {
                         falseMatch.add(temp1);
                     }
                 }else  {
-                    Map.Entry<String, Long> maxEntry = Collections.max(counts.entrySet(),
-                            Map.Entry.comparingByValue());
-                    if(Objects.equals(maxEntry.getKey(), temp1.toString())){
-                        if(solution.contains(temp1.toString())){
-                            match.add(temp1);
-                        }else {
-                            falseMatch.add(temp1);
-                        }
-
-                    } else if (Objects.equals(maxEntry.getKey(), temp2.toString())) {
-
-                        if(solution.contains(temp2.toString())){
-                            match.add(temp2);
-                        }else {
-                            falseMatch.add(temp1);
-                        }
-                    }else{
-                        if(solution.contains(temp1.toString())){
-                            shouldBeMatch.add(temp1);
-                        }else {
-                            correctNotMatch.add(temp1);
-                        }
-                        if(solution.contains(temp2.toString())){
-                            shouldBeMatch.add(temp2);
-                        }else {
-                            correctNotMatch.add(temp2);
-                        }
-                    }
+                    throw new RuntimeException();
                 }
 
                 /*
@@ -420,14 +401,15 @@ public class HelperMain {
         for(InclusionDependency p: match) {
             //if(counts.get()) {
                 System.out.println("match: " + p);
-                System.out.println("match: List: " +  countingMap.get(p));
+                //System.out.println("match: List: " +  countingMap.get(p));
             //}
         }
 
         System.out.println("correctNotMatch: length: "+correctNotMatch.size());
         for(InclusionDependency p: correctNotMatch) {
-            if(countingMap.get(p).keySet().size()!=1) {
-                System.out.println("correctNotMatch: " + p);
+            System.out.println("correctNotMatch: " + p);
+            //if(countingMap.get(p).keySet().size()!=1) {
+            //    System.out.println("correctNotMatch: " + p);
                 System.out.println("correctNotMatch: List: " + countingMap.get(p));
             }
         }
