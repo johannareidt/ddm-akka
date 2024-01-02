@@ -27,7 +27,7 @@ public class AnalyzePair implements Serializable {
     }
 
 
-    public void logged(String pre){
+    void logged(String pre){
 
         boolean c1SubToc2 = false;
         boolean c2SubToc1 = false;
@@ -89,7 +89,7 @@ public class AnalyzePair implements Serializable {
     }
 
 
-    public InclusionDependency firstIsSubSetToSecond(){
+    InclusionDependency firstIsSubSetToSecond(){
         if(this.column2.containsAll(this.column1)){
             return new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
                     new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()});
@@ -97,7 +97,7 @@ public class AnalyzePair implements Serializable {
         return null;
     }
 
-    public InclusionDependency secondIsSubSetToFirst(){
+    InclusionDependency secondIsSubSetToFirst(){
         //biglist.containsAll(littleList)
         if(this.column1.containsAll(this.column2)){
             return new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
@@ -106,7 +106,7 @@ public class AnalyzePair implements Serializable {
         return null;
     }
 
-    public int firstInSecond(){
+    int firstInSecond(){
         ArrayList<String> res = new ArrayList<>();
         this.column1.getEntries().iterator().forEachRemaining(e->
         {
@@ -116,7 +116,7 @@ public class AnalyzePair implements Serializable {
         return new HashSet<String>(res).size();
     }
 
-    public int firstNotInSecond(){
+    int firstNotInSecond(){
         ArrayList<String> res = new ArrayList<>();
         this.column1.getEntries().iterator().forEachRemaining(e->
         {
@@ -125,7 +125,7 @@ public class AnalyzePair implements Serializable {
             }});
         return new HashSet<String>(res).size();
     }
-    public int secondInFirst(){
+    int secondInFirst(){
         ArrayList<String> res = new ArrayList<>();
         this.column2.getEntries().iterator().forEachRemaining(e->
         {

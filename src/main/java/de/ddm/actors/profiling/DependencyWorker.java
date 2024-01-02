@@ -68,6 +68,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			result.setHasResult(true);
 
 
+			/*
 			InclusionDependency id1 = analyzePair.firstIsSubSetToSecond();
 			if(id1 != null) {
 				if(!result.getInclusionDependencies().contains(id1)) {
@@ -85,6 +86,9 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 					result.getInclusionDependencies().add(null);
 				}
 			}
+
+			 */
+			result.getInclusionDependencies().add(analyzePair.getInclusionDependency());
 			return result;
 		}
 	}
