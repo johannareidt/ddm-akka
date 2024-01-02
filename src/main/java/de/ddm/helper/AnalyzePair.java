@@ -41,14 +41,18 @@ public class AnalyzePair implements Serializable {
         int secondNotInFirst = secondNotInFirst();
         System.out.println(pre+ " Pair: firstInSecond: "+firstInSecond);
         System.out.println(pre+ " Pair: firstInSecond>0: "+(firstInSecond>0));
-        System.out.println(pre+ " Pair: firstInSecond*0.1: "+(firstInSecond*0.1));
+        System.out.println(pre+ " Pair: firstInSecond*0.1: "+firstInSecond*0.1);
+        System.out.println(pre+ " Pair: Math.max(1,firstInSecond*0.1): "+Math.max(1.,firstInSecond*0.1));
         System.out.println(pre+ " Pair: firstNotInSecond: "+firstNotInSecond);
-        System.out.println(pre+ " Pair: firstNotInSecond<=firstInSecond*0.1: "+(firstNotInSecond<=firstInSecond*0.1));
+        System.out.println(pre+ " Pair: firstNotInSecond<=Math.max(1,firstInSecond*0.1): "+(firstNotInSecond<=Math.max(1.,firstInSecond*0.1)));
+        System.out.println(pre+ " Pair: firstNotInSecond<=1: "+(firstNotInSecond<=1));
         System.out.println(pre+ " Pair: secondInFirst: "+secondInFirst);
         System.out.println(pre+ " Pair: secondInFirst>0: "+(secondInFirst>0));
         System.out.println(pre+ " Pair: secondInFirst*0.1: "+(secondInFirst*0.1));
+        System.out.println(pre+ " Pair: secondInFirst*0.1: "+Math.max(1.,secondInFirst*0.1));
         System.out.println(pre+ " Pair: secondNotInFirst: "+secondNotInFirst);
-        System.out.println(pre+ " Pair: secondNotInFirst<=secondInFirst*0.1: "+(secondNotInFirst<=secondInFirst*0.1));
+        System.out.println(pre+ " Pair: secondNotInFirst<=Math.max(1,secondInFirst*0.1): "+(secondNotInFirst<=Math.max(1.,secondInFirst*0.1)));
+        System.out.println(pre+ " Pair: secondNotInFirst<=1: "+(secondNotInFirst<=1));
 
     }
 
@@ -56,7 +60,7 @@ public class AnalyzePair implements Serializable {
         boolean c1SubToc2 = false;
         boolean c2SubToc1 = false;
 
-        int min = Math.min(this.column1.getEntries().size(), this.column2.getEntries().size());
+        //int min = Math.min(this.column1.getEntries().size(), this.column2.getEntries().size());
 
         int firstInSecond = firstInSecond();
         int firstNotInSecond = firstNotInSecond();
@@ -68,10 +72,10 @@ public class AnalyzePair implements Serializable {
         System.out.println("Pair: "+this.toEmpty().toString());
         System.out.println();
 
-        if(firstInSecond>0 && firstNotInSecond<=firstInSecond*0.1){
+        if(firstInSecond>0 && (firstNotInSecond<=Math.max(1,firstInSecond*0.1) || firstNotInSecond<=1)){
             c1SubToc2 = true;
         }
-        if(secondInFirst>0 && secondNotInFirst<=secondInFirst*0.1){
+        if(secondInFirst>0 && (secondNotInFirst<=Math.max(1,secondInFirst*0.1) || secondInFirst<=1)){
             c2SubToc1 = true;
         }
 
