@@ -62,17 +62,11 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 		@Override
 		DependencyMiner.Result handle() {
+
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.setEmptyPair(analyzePair.toEmpty());
 			result.setHasResult(true);
-			InclusionDependency id = analyzePair.firstIsSubSetToSecond();
-			if(id != null) {
-				result.getInclusionDependencies().add(id);
-			}
-			id = analyzePair.secondIsSubSetToFirst();
-			if(id != null) {
-				result.getInclusionDependencies().add(id);
-			}
+
 
 			InclusionDependency id1 = analyzePair.firstIsSubSetToSecond();
 			if(id1 != null) {
@@ -139,6 +133,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 	}
 
 
+	/*
 
 	public static class MakePairsTask extends Task {
 		EmptyTable t1;
@@ -161,6 +156,8 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			return result;
 		}
 	}
+
+	 */
 	public static class WaitTask extends Task {
 		@Override
 		DependencyMiner.Result handle() {
