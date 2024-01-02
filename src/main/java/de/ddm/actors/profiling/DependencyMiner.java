@@ -9,9 +9,11 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
+//import de.ddm.actors.patterns.LargeMessageProxy;
 import de.ddm.actors.patterns.LargeMessageProxy;
 import de.ddm.helper.CSVTable;
 import de.ddm.helper.EmptyPair;
+//import de.ddm.serialization.AkkaSerializable;
 import de.ddm.serialization.AkkaSerializable;
 import de.ddm.singletons.InputConfigurationSingleton;
 import de.ddm.singletons.SystemConfigurationSingleton;
@@ -127,6 +129,9 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	private final File[] inputFiles;
 	private final String[][] headerLines;
 
+
+	private final List<EmptyPair> pairs = new ArrayList<>();
+
 	private final List<ActorRef<InputReader.Message>> inputReaders;
 	private final ActorRef<ResultCollector.Message> resultCollector;
 	private final ActorRef<LargeMessageProxy.Message> largeMessageProxy;
@@ -172,6 +177,9 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 			this.tasks.add(new DependencyWorker.CreateTableTask(
 					inputFiles[message.id].getPath(),
 					message.batch));
+		}else{
+			System.out.println("Batch zero");
+
 		}
 
 
@@ -230,19 +238,62 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 				this.resultCollector.tell(new ResultCollector.ResultMessage(ids));
 			}
 			if(message.result.pairs != null){
+				this.pairs.addAll(message.result.pairs);
+
 				for(EmptyPair p: message.result.pairs){
-					tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
-							this.tables.get(p.getColumnFile1()),
-							this.tables.get(p.getColumnFile2())
-					)));
+					for (CSVTable t1 : this.tables.get(p.getColumnFile1())){
+						for (CSVTable t2 : this.tables.get(p.getColumnFile2())){
+							tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
+									t1,
+									t2
+							)));
+						}
+					}
+
 				}
+
+
+
 			}
 			if(message.result.table != null){
 				CSVTable res = message.result.table;
-				for(CSVTable t: this.tables.values()){
-					tasks.add(new DependencyWorker.MakePairsTask(res.toEmpty(), t.toEmpty()));
+
+				if(this.tables.containsKey(res.getFilepath())){
+					this.tables.get(res.getFilepath()).add(res);
+
+					for(EmptyPair p: this.pairs){
+						if(Objects.equals(p.getColumnFile1(), res.getFilepath())){
+							for (CSVTable t2 : this.tables.get(p.getColumnFile2())) {
+								tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
+										res,
+										t2
+								)));
+							}
+						}if(Objects.equals(p.getColumnFile2(), res.getFilepath())){
+							for (CSVTable t1 : this.tables.get(p.getColumnFile1())) {
+								tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
+										t1,
+										res
+								)));
+							}
+						}
+					}
+
+				}else {
+					List<CSVTable> ts = new ArrayList<>();
+					ts.add(res);
+					this.tables.put(res.getFilepath(), ts);
+
+
+
+					//Make pairs after last empty batch
+
+					for(List<CSVTable> l: this.tables.values()) {
+						tasks.add(new DependencyWorker.MakePairsTask(res.toEmpty(), l.get(0).toEmpty()));
+					}
 				}
-				this.tables.put(res.getFilepath(), res);
+				//this.tables.put(res.getFilepath(), res);
+
 			}
 		}
 		// I still don't know what task the worker could help me to solve ... but let me keep her busy.
@@ -275,7 +326,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 
 
-	private final HashMap<String, CSVTable> tables = new HashMap<>();
+	private final HashMap<String, List<CSVTable>> tables = new HashMap<>();
 	private final Queue<DependencyWorker.Task> tasks = new ArrayDeque<>();
 
 	private DependencyWorker.Task nextTask(){

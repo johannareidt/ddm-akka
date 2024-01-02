@@ -11,6 +11,11 @@ import java.io.IOException;
 public class Main {
 
 	public static void main(String[] args) {
+
+		if(args == null || args.length == 0){
+			args = new String[]{"","",""};
+		}
+
 		Command.applyOn(args);
 
 		SystemConfiguration config = SystemConfigurationSingleton.get();
