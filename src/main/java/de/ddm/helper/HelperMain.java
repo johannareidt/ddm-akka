@@ -131,7 +131,32 @@ public class HelperMain {
         return res;
     }
 
-    public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(List<EmptyPair> pairs, HashMap<String, List<CSVTable>> tables){
+    public static void analyzeTask(InclusionDependency id, String pre){
+        AnalyzePair analyzePair = new AnalyzePair(
+                columns.get(id.getDependentFile().getPath())
+                        .stream().filter(column ->
+                                Objects.equals(column.getColumnName(),
+                                        id.getDependentAttributes()[0]))
+                        .collect(Collectors.toList())
+                        .get(0),
+                columns.get(id.getReferencedFile().getPath())
+                        .stream().filter(column ->
+                                Objects.equals(column.getColumnName(),
+                                        id.getReferencedAttributes()[0]))
+                        .collect(Collectors.toList())
+                        .get(0));
+        System.out.println(pre+" firstIsSubSetToSecond "+analyzePair.firstIsSubSetToSecond());
+        System.out.println(pre+" firstInSecond "+analyzePair.firstInSecond());
+        System.out.println(pre+" firstNotInSecond "+analyzePair.firstNotInSecond());
+        /*
+        System.out.println(pre+" secondIsSubSetToFirst "+analyzePair.secondIsSubSetToFirst());
+        System.out.println(pre+" secondInFirst "+analyzePair.secondInFirst());
+        System.out.println(pre+" secondNotInFirst "+analyzePair.secondNotInFirst());
+
+         */
+    }
+
+    public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(HashMap<String, List<CSVTable>> tables){
         HashMap<EmptyPair, List<InclusionDependency>>res =new HashMap<>();
         columns.clear();
         for(String path: tables.keySet()){
@@ -164,17 +189,8 @@ public class HelperMain {
                         for(CSVColumn c2: columns.get(path2)) {
                             AnalyzePair analyzePair = new AnalyzePair(c1, c2);
                             ArrayList<InclusionDependency> temp = new ArrayList<>();
-                            InclusionDependency id1 = analyzePair.firstIsSubSetToSecond();
-                            if (id1 != null) {
-                                temp.add(id1);
-                            }
-                            InclusionDependency id2 = analyzePair.secondIsSubSetToFirst();
-                            if (id2 != null) {
-                                temp.add(id2);
-                            }
-                            if (id1 == null && id2 == null) {
-                                temp.add(null);
-                            }
+                            InclusionDependency id1 = analyzePair.getInclusionDependency();
+                            temp.add(id1);
 
                             res.put(analyzePair.toEmpty(), temp);
                         }
@@ -226,7 +242,7 @@ public class HelperMain {
         List<EmptyPair> pairs = makePairs(tables);
 
         //System.out.println(pairs);
-        HashMap<EmptyPair, List<InclusionDependency>> results = analyzeTask(pairs, tables);
+        HashMap<EmptyPair, List<InclusionDependency>> results = analyzeTask( tables);
         //System.out.println(results);
 
         /*
@@ -402,7 +418,8 @@ public class HelperMain {
         System.out.println("match: length: "+match.size());
         for(InclusionDependency p: match) {
             //if(counts.get()) {
-                System.out.println("match: " + p);
+            System.out.println("match: " + p);
+            analyzeTask( p, "match: ");
                 //System.out.println("match: List: " +  countingMap.get(p));
             //}
         }
@@ -422,28 +439,39 @@ public class HelperMain {
         System.out.println("falseMatch: length: "+falseMatch.size());
         for(InclusionDependency p: falseMatch) {
             System.out.println("falseMatch: " + p);
+            analyzeTask( p, "falseMatch: ");
+
+            /*
             System.out.println(columns.get(p.getDependentFile().getPath())
                     .stream().filter(column ->
                             Objects.equals(column.getColumnName(),
-                                    p.getDependentAttributes()[0])).collect(Collectors.toList()));
+                                    p.getDependentAttributes()[0])).collect(Collectors.toList()).get(0).getEntries());
             System.out.println(columns.get(p.getReferencedFile().getPath())
                     .stream().filter(column ->
                             Objects.equals(column.getColumnName(),
-                                    p.getReferencedAttributes()[0])).collect(Collectors.toList()));
+                                    p.getReferencedAttributes()[0])).collect(Collectors.toList()).get(0).getEntries());
+
+
+             */
+
 
             //System.out.println("falseMatch: List: " +  countingMap.get(p));
         }
         System.out.println("shouldBeMatch: length: "+shouldBeMatch.size());
         for(InclusionDependency p: shouldBeMatch) {
             System.out.println("shouldBeMatch: " + p);
+            analyzeTask(p, "shouldBeMatch: ");
+            /*
             System.out.println(columns.get(p.getDependentFile().getPath())
                     .stream().filter(column ->
                             Objects.equals(column.getColumnName(),
-                                    p.getDependentAttributes()[0])).collect(Collectors.toList()));
+                                    p.getDependentAttributes()[0])).collect(Collectors.toList()).get(0).getEntries());
             System.out.println(columns.get(p.getReferencedFile().getPath())
                     .stream().filter(column ->
                             Objects.equals(column.getColumnName(),
-                                    p.getReferencedAttributes()[0])).collect(Collectors.toList()));
+                                    p.getReferencedAttributes()[0])).collect(Collectors.toList()).get(0).getEntries());
+
+             */
             //System.out.println("shouldBeMatch: List: " +  countingMap.get(p));
         }
 
