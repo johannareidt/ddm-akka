@@ -77,8 +77,10 @@ public class AnalyzePair implements Serializable {
                     //c1SubToc2 = true;
 
                     System.out.println("Pair: "+"firstInSecond>1, firstInSecond>=secondInFirst, firstNotInSecond<=firstInSecond*0.1");
-                    id.add( new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
-                            new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
+
+
+                    id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
+                            new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
 
                 }
                 if (firstNotInSecond <= 1) {
@@ -86,9 +88,10 @@ public class AnalyzePair implements Serializable {
 
                     //c1SubToc2 = true;
 
+                    id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
+                            new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
 
-                    id.add( new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
-                            new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
+
                 }
             }
         }
@@ -100,17 +103,18 @@ public class AnalyzePair implements Serializable {
 
 
                     System.out.println("Pair: "+"secondInFirst>1, secondInFirst>=firstInSecond, secondNotInFirst <= secondInFirst * 0.1");
-                    id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
-                            new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
+
+                    id.add( new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
+                            new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
 
                 }
                 if (secondNotInFirst <= 1) {
 
                     //c2SubToc1 = true;
                     System.out.println("Pair: "+"secondInFirst>1, secondInFirst>=firstInSecond, secondInFirst <= 1");
+                    id.add( new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
+                            new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
 
-                    id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
-                            new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
                 }
             }
         }
