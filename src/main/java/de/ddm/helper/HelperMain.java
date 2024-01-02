@@ -197,11 +197,8 @@ public class HelperMain {
                     for(CSVColumn c1: columns.get(path1)) {
                         for(CSVColumn c2: columns.get(path2)) {
                             AnalyzePair analyzePair = new AnalyzePair(c1, c2);
-                            ArrayList<InclusionDependency> temp = new ArrayList<>();
-                            InclusionDependency id1 = analyzePair.getInclusionDependency();
-                            temp.add(id1);
 
-                            res.put(analyzePair.toEmpty(), temp);
+                            res.put(analyzePair.toEmpty(), analyzePair.getInclusionDependency());
                         }
                     }
                 }

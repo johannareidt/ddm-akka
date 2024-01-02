@@ -88,7 +88,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			}
 
 			 */
-			result.getInclusionDependencies().add(analyzePair.getInclusionDependency());
+			result.getInclusionDependencies().addAll(analyzePair.getInclusionDependency());
 			return result;
 		}
 	}
