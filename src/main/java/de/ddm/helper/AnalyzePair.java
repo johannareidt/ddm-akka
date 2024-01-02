@@ -41,15 +41,17 @@ public class AnalyzePair implements Serializable {
         System.out.println(pre+ " Pair: firstInSecond>=secondInFirst: "+(firstInSecond>=secondInFirst));
         System.out.println(pre+ " Pair: firstInSecond*0.1: "+firstInSecond*0.1);
         System.out.println(pre+ " Pair: firstNotInSecond: "+firstNotInSecond);
-        System.out.println(pre+ " Pair: firstNotInSecond<=1,firstInSecond*0.1: "+(firstNotInSecond<=firstInSecond*0.1));
+        System.out.println(pre+ " Pair: firstNotInSecond<=firstInSecond*0.1: "+(firstNotInSecond<=firstInSecond*0.1));
         System.out.println(pre+ " Pair: firstNotInSecond<=1: "+(firstNotInSecond<=1));
+        System.out.println(pre+ " Pair: firstInSecond*0.1<=1: "+(firstInSecond*0.1<=1));
         System.out.println(pre+ " Pair: secondInFirst: "+secondInFirst);
         System.out.println(pre+ " Pair: secondInFirst>1: "+(secondInFirst>0));
         System.out.println(pre+ " Pair: secondInFirst>=firstInSecond: "+(secondInFirst>=firstInSecond));
         System.out.println(pre+ " Pair: secondInFirst*0.1: "+(secondInFirst*0.1));
         System.out.println(pre+ " Pair: secondNotInFirst: "+secondNotInFirst);
-        System.out.println(pre+ " Pair: secondNotInFirst<=Math.max(1,secondInFirst*0.1): "+(secondNotInFirst<=secondInFirst*0.1));
+        System.out.println(pre+ " Pair: secondNotInFirst<=secondInFirst*0.1: "+(secondNotInFirst<=secondInFirst*0.1));
         System.out.println(pre+ " Pair: secondNotInFirst<=1: "+(secondNotInFirst<=1));
+        System.out.println(pre+ " Pair: secondInFirst*0.1<=1: "+(secondInFirst*0.1<=1));
 
     }
 
@@ -83,14 +85,15 @@ public class AnalyzePair implements Serializable {
                             new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
 
                 }
-                if (firstNotInSecond <= 1) {
-                    System.out.println("Pair: "+"firstInSecond>1, firstInSecond>=secondInFirst, firstNotInSecond <= 1");
+                else if (firstNotInSecond <= 1) {
+                    if(firstInSecond*0.1<=1) {
+                        System.out.println("Pair: " + "firstInSecond>1, firstInSecond>=secondInFirst, firstNotInSecond <= 1, firstInSecond*0.1<=1");
 
-                    //c1SubToc2 = true;
+                        //c1SubToc2 = true;
 
-                    id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
-                            new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
-
+                        id.add(new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
+                                new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
+                    }
 
                 }
             }
@@ -108,12 +111,14 @@ public class AnalyzePair implements Serializable {
                             new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
 
                 }
-                if (secondNotInFirst <= 1) {
+                else if (secondNotInFirst <= 1) {
 
-                    //c2SubToc1 = true;
-                    System.out.println("Pair: "+"secondInFirst>1, secondInFirst>=firstInSecond, secondInFirst <= 1");
-                    id.add( new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
-                            new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
+                    if(secondInFirst*0.1<=1) {
+                        //c2SubToc1 = true;
+                        System.out.println("Pair: " + "secondInFirst>1, secondInFirst>=firstInSecond, secondInFirst <= 1, secondInFirst*0.1<=1");
+                        id.add(new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
+                                new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
+                    }
 
                 }
             }
