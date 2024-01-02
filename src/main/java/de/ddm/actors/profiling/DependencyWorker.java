@@ -8,10 +8,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import de.ddm.actors.patterns.LargeMessageProxy;
-import de.ddm.helper.AnalyzePair;
-import de.ddm.helper.CSVTable;
-import de.ddm.helper.EmptyPair;
-import de.ddm.helper.EmptyTable;
+import de.ddm.helper.*;
 import de.ddm.serialization.AkkaSerializable;
 import de.ddm.structures.InclusionDependency;
 import lombok.AllArgsConstructor;
@@ -113,6 +110,30 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.table = new CSVTable(filepath, batch, header);
 			result.table.split();
+			return result;
+		}
+	}
+
+	public static class MergeBatchColumn extends Task {
+		String path;
+		String cn;
+		List<CSVColumn> columns;
+
+		public MergeBatchColumn(String path, String cn, List<CSVColumn> columns) {
+			this.path = path;
+			this.cn = cn;
+			this.columns = columns;
+		}
+
+		@Override
+		DependencyMiner.Result handle() {
+
+			DependencyMiner.Result result = new DependencyMiner.Result();
+			ArrayList<String> entries = new ArrayList<>();
+			for(CSVColumn c: columns){
+				entries.addAll(c.getEntries());
+			}
+			result.column = new CSVColumn(path, cn, entries.toArray(new String[]{}));
 			return result;
 		}
 	}
@@ -229,4 +250,6 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 				new LargeMessageProxy.SendMessage(completionMessage,
 				message.getDependencyMinerLargeMessageProxy()));
 	}
+
+
 }

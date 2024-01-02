@@ -5,10 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 
 public class CSVColumn implements Serializable {
 
@@ -38,6 +35,7 @@ public class CSVColumn implements Serializable {
     }
 
 
-
-
+    public Collection<String> getEntries() {
+        return this.entries;
+    }
 }

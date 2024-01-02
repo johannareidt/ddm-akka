@@ -11,6 +11,8 @@ import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 //import de.ddm.actors.patterns.LargeMessageProxy;
 import de.ddm.actors.patterns.LargeMessageProxy;
+import de.ddm.helper.AnalyzePair;
+import de.ddm.helper.CSVColumn;
 import de.ddm.helper.CSVTable;
 import de.ddm.helper.EmptyPair;
 //import de.ddm.serialization.AkkaSerializable;
@@ -25,7 +27,6 @@ import lombok.Setter;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
@@ -89,7 +90,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		EmptyPair emptyPair = null;
 		List<InclusionDependency> inclusionDependencies = new ArrayList<>();
 		CSVTable table = null;
-		List<EmptyPair> pairs = null;
+		CSVColumn column = null;
+		//List<EmptyPair> pairs = null;
 	}
 
 	////////////////////////
@@ -132,13 +134,23 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	private final String[][] headerLines;
 
 
-	private final List<EmptyPair> pairs = new ArrayList<>();
+	//private final List<EmptyPair> pairs = new ArrayList<>();
 
 	private final List<ActorRef<InputReader.Message>> inputReaders;
 	private final ActorRef<ResultCollector.Message> resultCollector;
 	private final ActorRef<LargeMessageProxy.Message> largeMessageProxy;
 
 	private final List<ActorRef<DependencyWorker.Message>> dependencyWorkers;
+
+
+
+
+
+
+
+	private final HashMap<String, List<CSVTable>> tables = new HashMap<>();
+	private final HashMap<String, List<CSVColumn>> columns = new HashMap<>();
+	private final Queue<DependencyWorker.Task> tasks = new ArrayDeque<>();
 
 	////////////////////
 	// Actor Behavior //
@@ -182,7 +194,19 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 					this.headerLines[message.id]));
 		}else{
 			System.out.println("Batch zero");
-
+			String path = inputFiles[message.id].getPath();
+			HashMap<String, List<CSVColumn>> columns = new HashMap<>();
+			for(CSVTable t: this.tables.get(path)){
+				for(String cn: t.getColumnNames()){
+					if(!columns.containsKey(cn)){
+						columns.put(cn, new ArrayList<>());
+					}
+					columns.get(cn).add( t.getColumn(cn));
+				}
+			}
+			for (String cn: columns.keySet()) {
+				this.tasks.add(new DependencyWorker.MergeBatchColumn(path, cn, columns.get(cn)));
+			}
 		}
 
 
@@ -242,16 +266,26 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 				}
 				this.resultCollector.tell(new ResultCollector.ResultMessage(ids));
 			}
+			/*
 			if(message.result.pairs != null){
 				this.pairs.addAll(message.result.pairs);
+			}
 
-				for(EmptyPair p: message.result.pairs){
-					for (CSVTable t1 : this.tables.get(p.getColumnFile1())){
-						for (CSVTable t2 : this.tables.get(p.getColumnFile2())){
-							tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
-									t1,
-									t2
-							)));
+			 */
+			if(message.result.column != null){
+
+				if(!this.columns.containsKey(message.result.column.getFilePath())) {
+					this.columns.put(message.result.column.getFilePath(), new ArrayList<>());
+				}
+
+
+				this.columns.get(message.result.column.getFilePath()).add(message.result.column);
+
+
+				for(String path: this.columns.keySet()){
+					if(!Objects.equals(path, message.result.column.getFilePath())){
+						for (CSVColumn oc : this.columns.get(path)){
+							tasks.add(new DependencyWorker.AnalyzeTask(new AnalyzePair(message.result.column, oc)));
 						}
 					}
 
@@ -266,6 +300,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 				if(this.tables.containsKey(res.getFilepath())){
 					this.tables.get(res.getFilepath()).add(res);
 
+					/*
 					for(EmptyPair p: this.pairs){
 						if(Objects.equals(p.getColumnFile1(), res.getFilepath())){
 							for (CSVTable t2 : this.tables.get(p.getColumnFile2())) {
@@ -284,6 +319,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 						}
 					}
 
+					 */
+
 				}else {
 					List<CSVTable> ts = new ArrayList<>();
 					ts.add(res);
@@ -292,10 +329,12 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 
 					//Make pairs after last empty batch
-
+					/*
 					for(List<CSVTable> l: this.tables.values()) {
 						tasks.add(new DependencyWorker.MakePairsTask(res.toEmpty(), l.get(0).toEmpty()));
 					}
+
+					 */
 				}
 				//this.tables.put(res.getFilepath(), res);
 
@@ -329,10 +368,6 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		return this;
 	}
 
-
-
-	private final HashMap<String, List<CSVTable>> tables = new HashMap<>();
-	private final Queue<DependencyWorker.Task> tasks = new ArrayDeque<>();
 
 	private DependencyWorker.Task nextTask(){
 		DependencyWorker.Task task = tasks.poll();
