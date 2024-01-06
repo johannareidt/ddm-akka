@@ -11,10 +11,7 @@ import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 //import de.ddm.actors.patterns.LargeMessageProxy;
 import de.ddm.actors.patterns.LargeMessageProxy;
-import de.ddm.helper.AnalyzePair;
-import de.ddm.helper.CSVColumn;
-import de.ddm.helper.CSVTable;
-import de.ddm.helper.EmptyPair;
+import de.ddm.helper.*;
 //import de.ddm.serialization.AkkaSerializable;
 import de.ddm.serialization.AkkaSerializable;
 import de.ddm.singletons.InputConfigurationSingleton;
@@ -121,6 +118,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		this.dependencyWorkers = new ArrayList<>();
 
 		context.getSystem().receptionist().tell(Receptionist.register(dependencyMinerService, context.getSelf()));
+
+		this.minerManager = new MinerManager();
 	}
 
 	/////////////////
@@ -147,10 +146,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 
 
-
-	private final HashMap<String, List<CSVTable>> tables = new HashMap<>();
-	private final HashMap<String, List<CSVColumn>> columns = new HashMap<>();
-	private final Queue<DependencyWorker.Task> tasks = new ArrayDeque<>();
+	private final MinerManager minerManager;
 
 	////////////////////
 	// Actor Behavior //
@@ -188,27 +184,14 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		if (message.getBatch().size() != 0) {
 			this.inputReaders.get(message.getId()).tell(new InputReader.ReadBatchMessage(this.getContext().getSelf()));
 
-			this.tasks.add(new DependencyWorker.CreateTableTask(
+			this.minerManager.addTask(new DependencyWorker.CreateTableTask(
 					inputFiles[message.id].getPath(),
 					message.batch,
 					this.headerLines[message.id]));
+
+
 		}else{
-			//System.out.println("Batch zero");
-			String path = inputFiles[message.id].getPath();
-			HashMap<String, List<CSVColumn>> columns = new HashMap<>();
-			if(this.tables.containsKey(path)) {
-				for (CSVTable t : this.tables.get(path)) {
-					for (String cn : t.getColumnNames()) {
-						if (!columns.containsKey(cn)) {
-							columns.put(cn, new ArrayList<>());
-						}
-						columns.get(cn).add(t.getColumn(cn));
-					}
-				}
-			}
-			for (String cn: columns.keySet()) {
-				this.tasks.add(new DependencyWorker.MergeBatchColumn(path, cn, columns.get(cn)));
-			}
+			minerManager.readTableFinish(inputFiles[message.id].getPath());
 		}
 
 
@@ -232,9 +215,9 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 			// The worker should get some work ... let me send her something before I figure out what I actually want from her.
 			// I probably need to idle the worker for a while, if I do not have work for it right now ... (see master/worker pattern)
 			//dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, nextTask()));
-			nextTask(dependencyWorker);
+			this.nextTask(dependencyWorker);
 		}
-		checkAllWorkersRunning();
+		this.checkAllWorkersRunning();
 		return this;
 	}
 
@@ -260,94 +243,14 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		}
 
 		 */
-		if(message.result != null) {
-			if(message.result.hasResult) {
-				List<InclusionDependency> ids = new ArrayList<>(message.result.inclusionDependencies);
-				if(message.result.inclusionDependencies.isEmpty()){
-					ids.add(null);
-				}
-				this.resultCollector.tell(new ResultCollector.ResultMessage(ids));
-			}
-			/*
-			if(message.result.pairs != null){
-				this.pairs.addAll(message.result.pairs);
-			}
-
-			 */
-			if(message.result.column != null){
-
-				if(!this.columns.containsKey(message.result.column.getFilePath())) {
-					this.columns.put(message.result.column.getFilePath(), new ArrayList<>());
-				}
-
-
-				this.columns.get(message.result.column.getFilePath()).add(message.result.column);
-
-
-				for(String path: this.columns.keySet()){
-					if(!Objects.equals(path, message.result.column.getFilePath())){
-						for (CSVColumn oc : this.columns.get(path)){
-							tasks.add(new DependencyWorker.AnalyzeTask(new AnalyzePair(message.result.column, oc)));
-						}
-					}
-
-				}
-
-
-
-			}
-			if(message.result.table != null){
-				CSVTable res = message.result.table;
-
-				if(this.tables.containsKey(res.getFilepath())){
-					this.tables.get(res.getFilepath()).add(res);
-
-					/*
-					for(EmptyPair p: this.pairs){
-						if(Objects.equals(p.getColumnFile1(), res.getFilepath())){
-							for (CSVTable t2 : this.tables.get(p.getColumnFile2())) {
-								tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
-										res,
-										t2
-								)));
-							}
-						}if(Objects.equals(p.getColumnFile2(), res.getFilepath())){
-							for (CSVTable t1 : this.tables.get(p.getColumnFile1())) {
-								tasks.add(new DependencyWorker.AnalyzeTask(p.transform(
-										t1,
-										res
-								)));
-							}
-						}
-					}
-
-					 */
-
-				}else {
-					List<CSVTable> ts = new ArrayList<>();
-					ts.add(res);
-					this.tables.put(res.getFilepath(), ts);
-
-
-
-					//Make pairs after last empty batch
-					/*
-					for(List<CSVTable> l: this.tables.values()) {
-						tasks.add(new DependencyWorker.MakePairsTask(res.toEmpty(), l.get(0).toEmpty()));
-					}
-
-					 */
-				}
-				//this.tables.put(res.getFilepath(), res);
-
-			}
-		}
+		minerManager.saveAndNext(message);
+		this.resultCollector.tell(minerManager.getResults());
 		// I still don't know what task the worker could help me to solve ... but let me keep her busy.
 		// Once I found all unary INDs, I could check if this.discoverNaryDependencies is set to true and try to detect n-ary INDs as well!
 		//TODO:  start next Task
 
 		//dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy,  nextTask()));
-		nextTask(dependencyWorker);
+		this.nextTask(dependencyWorker);
 
 		// At some point, I am done with the discovery. That is when I should call my end method. Because I do not work on a completable task yet, I simply call it after some time.
 		if (System.currentTimeMillis() - this.startTime > 2000000)
@@ -364,30 +267,22 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	private Behavior<Message> handle(Terminated signal) {
 		ActorRef<DependencyWorker.Message> dependencyWorker = signal.getRef().unsafeUpcast();
 		int i = this.dependencyWorkers.indexOf(dependencyWorker);
-		this.tasks.add(this.currentlyDoing.get(i));
-		this.currentlyDoing.remove(i);
+		minerManager.workerStopped(i);
+		//this.tasks.add(this.currentlyDoing.get(i));
+		//this.currentlyDoing.remove(i);
 		this.dependencyWorkers.remove(dependencyWorker);
 		return this;
 	}
 
-
-	private DependencyWorker.Task nextTask(){
-		DependencyWorker.Task task = tasks.poll();
-		if(task == null){
-			return new DependencyWorker.WaitTask();
-		}
-		return task;
-	}
-
-	private void nextTask(ActorRef<DependencyWorker.Message> dependencyWorker){
-		DependencyWorker.Task task = nextTask();
+	public void nextTask(ActorRef<DependencyWorker.Message> dependencyWorker){
+		DependencyWorker.Task task = minerManager.nextTask();
 		//this.currentlyDoing
 		dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy, task));
-		this.currentlyDoing.put(this.dependencyWorkers.indexOf(dependencyWorker), task);
+		minerManager.putCurrently(this.dependencyWorkers.indexOf(dependencyWorker), task);
 	}
 
-	private void checkAllWorkersRunning(){
-		if(this.dependencyWorkers.size() != this.currentlyDoing.size()){
+	public void checkAllWorkersRunning(){
+		if(this.dependencyWorkers.size() != minerManager.workingSize()){
 			/*
 			IntStream.range(start, end)
 					.boxed()
@@ -395,14 +290,16 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 			 */
 			IntStream.range(0, this.dependencyWorkers.size())
-							.boxed()
-							.filter(e->!(this.currentlyDoing.containsKey(e)))
-							.map(this.dependencyWorkers::get)
-							.peek(this::nextTask);
+					.boxed()
+					.filter(e->!(minerManager.isCurrentlyWorking(e)))
+					.map(this.dependencyWorkers::get)
+					.peek(this::nextTask);
 		}
 	}
 
-	private final HashMap<Integer, DependencyWorker.Task> currentlyDoing = new HashMap<>();
+
+
+
 
 
 

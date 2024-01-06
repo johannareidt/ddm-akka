@@ -55,7 +55,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 	public static class AnalyzeTask extends Task{
 		private final AnalyzePair analyzePair;
-		AnalyzeTask(AnalyzePair analyzePair){
+		public AnalyzeTask(AnalyzePair analyzePair){
 			this.analyzePair = analyzePair;
 		}
 
@@ -223,7 +223,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		// I should probably know how to solve this task, but for now I just pretend some work...
 
 
-		//TODO: handle Task
+		//TO DO: handle Task
 		/*
 		int result = message.getTask();
 		long time = System.currentTimeMillis();

@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Manager implements Serializable {
+
+    /*
     @Getter
     private List<AnalyzePair> pairs;
 
@@ -39,5 +41,7 @@ public class Manager implements Serializable {
         missing.removeAll(done);
         return missing;
     }
+
+     */
 
 }
