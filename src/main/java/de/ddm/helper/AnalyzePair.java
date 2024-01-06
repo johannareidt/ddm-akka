@@ -14,8 +14,6 @@ public class AnalyzePair implements Serializable {
     private final CSVColumn column1;
     @Getter
     private final CSVColumn column2;
-    @Setter
-    private Comparator<String> comparator;
 
 
     public AnalyzePair(CSVColumn column1, CSVColumn column2) {
@@ -38,7 +36,7 @@ public class AnalyzePair implements Serializable {
         int secondNotInFirst = secondNotInFirst();
         System.out.println(pre+ " Pair: firstInSecond: "+firstInSecond);
         System.out.println(pre+ " Pair: firstInSecond>1: "+(firstInSecond>0));
-        System.out.println(pre+ " Pair: firstInSecond>=secondInFirst: "+(firstInSecond>=secondInFirst));
+        System.out.println(pre+ " Pair: firstInSecond>=firstNotInSecond: "+(firstInSecond>=firstNotInSecond));
         System.out.println(pre+ " Pair: firstInSecond*0.1: "+firstInSecond*0.1);
         System.out.println(pre+ " Pair: firstNotInSecond: "+firstNotInSecond);
         System.out.println(pre+ " Pair: firstNotInSecond<=firstInSecond*0.1: "+(firstNotInSecond<=firstInSecond*0.1));
@@ -46,7 +44,7 @@ public class AnalyzePair implements Serializable {
         System.out.println(pre+ " Pair: firstInSecond*0.1<=1: "+(firstInSecond*0.1<=1));
         System.out.println(pre+ " Pair: secondInFirst: "+secondInFirst);
         System.out.println(pre+ " Pair: secondInFirst>1: "+(secondInFirst>0));
-        System.out.println(pre+ " Pair: secondInFirst>=firstInSecond: "+(secondInFirst>=firstInSecond));
+        System.out.println(pre+ " Pair: secondInFirst>=secondNotInFirst: "+(secondInFirst>=secondNotInFirst));
         System.out.println(pre+ " Pair: secondInFirst*0.1: "+(secondInFirst*0.1));
         System.out.println(pre+ " Pair: secondNotInFirst: "+secondNotInFirst);
         System.out.println(pre+ " Pair: secondNotInFirst<=secondInFirst*0.1: "+(secondNotInFirst<=secondInFirst*0.1));
@@ -71,53 +69,72 @@ public class AnalyzePair implements Serializable {
         System.out.println();
         System.out.println("Pair: "+this.toEmpty().toString());
 
-        if(firstInSecond>1){
+        if(firstInSecond>0){
+            if(firstInSecond==1 && firstNotInSecond==0){
+                System.out.println("Pair: "+"firstInSecond==1 && firstNotInSecond==0");
+                id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
+                        new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
+                System.out.println(id.get(0).toString());
+            }
 
-            if(firstInSecond>=secondInFirst) {
+            if(firstInSecond>=firstNotInSecond) {
                 if (firstNotInSecond<=firstInSecond*0.1) {
 
                     //c1SubToc2 = true;
 
-                    System.out.println("Pair: "+"firstInSecond>1, firstInSecond>=secondInFirst, firstNotInSecond<=firstInSecond*0.1");
+                    System.out.println("Pair: "+"firstInSecond>1, firstInSecond>=firstNotInSecond, firstNotInSecond<=firstInSecond*0.1");
 
 
                     id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
                             new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
+                    System.out.println(id.get(0).toString());
 
                 }
                 else if (firstNotInSecond <= 1) {
                     if(firstInSecond*0.1<=1) {
-                        System.out.println("Pair: " + "firstInSecond>1, firstInSecond>=secondInFirst, firstNotInSecond <= 1, firstInSecond*0.1<=1");
+                        System.out.println("Pair: " + "firstInSecond>1, firstInSecond>=firstNotInSecond, firstNotInSecond <= 1, firstInSecond*0.1<=1");
 
                         //c1SubToc2 = true;
 
                         id.add(new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
                                 new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
+
+                        System.out.println(id.get(0).toString());
                     }
 
                 }
             }
         }
-        if(secondInFirst>1){
-            if(secondInFirst>=firstInSecond) {
+        if(secondInFirst>0){
+            if(secondInFirst==1 && secondNotInFirst==0){
+                System.out.println("Pair: "+"secondInFirst==1 && secondNotInFirst==0");
+                id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
+                        new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
+                System.out.println(id.get(0).toString());
+            }
+            if(secondInFirst>=secondNotInFirst) {
                 if (secondNotInFirst <= secondInFirst * 0.1) {
 
                     //c2SubToc1 = true;
 
 
-                    System.out.println("Pair: "+"secondInFirst>1, secondInFirst>=firstInSecond, secondNotInFirst <= secondInFirst * 0.1");
+                    System.out.println("Pair: "+"secondInFirst>1, secondInFirst>=secondNotInFirst, secondNotInFirst <= secondInFirst * 0.1");
 
                     id.add( new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
                             new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
+
+                    System.out.println(id.get(id.size()-1).toString());
 
                 }
                 else if (secondNotInFirst <= 1) {
 
                     if(secondInFirst*0.1<=1) {
                         //c2SubToc1 = true;
-                        System.out.println("Pair: " + "secondInFirst>1, secondInFirst>=firstInSecond, secondInFirst <= 1, secondInFirst*0.1<=1");
+                        System.out.println("Pair: " + "secondInFirst>1, secondInFirst>=secondNotInFirst, secondInFirst <= 1, secondInFirst*0.1<=1");
                         id.add(new InclusionDependency(new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()},
                                 new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()}));
+
+                        System.out.println(id.get(id.size()-1).toString());
                     }
 
                 }

@@ -165,8 +165,36 @@ public class HelperMain {
          */
     }
 
-    public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(HashMap<String, List<CSVTable>> tables){
-        HashMap<EmptyPair, List<InclusionDependency>>res =new HashMap<>();
+    public static void analyzeTask(HashMap<String, List<CSVTable>> tables, InclusionDependency id, String pre, List<String> solutions){
+        loadColumns(tables);
+        AnalyzePair analyzePair = new AnalyzePair(
+                columns.get(id.getDependentFile().getPath())
+                        .stream().filter(column ->
+                                Objects.equals(column.getColumnName(),
+                                        id.getDependentAttributes()[0]))
+                        .collect(Collectors.toList())
+                        .get(0),
+                columns.get(id.getReferencedFile().getPath())
+                        .stream().filter(column ->
+                                Objects.equals(column.getColumnName(),
+                                        id.getReferencedAttributes()[0]))
+                        .collect(Collectors.toList())
+                        .get(0));
+        System.out.println("\n");
+        System.out.println(id.toString());
+        List<InclusionDependency> temp = analyzePair.getInclusionDependency();
+        for(InclusionDependency t: temp){
+            if(t != null) {
+                System.out.println(pre+t.toString() + " with in solutions: " + solutions.contains(t.toString()));
+            }else{
+                System.out.println(pre+"error: "+id.toString());
+            }
+        }
+        analyzePair.logged(pre);
+
+    }
+
+    public static void loadColumns(HashMap<String, List<CSVTable>> tables){
         columns.clear();
         for(String path: tables.keySet()){
             columns.put(path, new ArrayList<>());
@@ -190,6 +218,14 @@ public class HelperMain {
 
 
         }
+    }
+
+    public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(HashMap<String, List<CSVTable>> tables){
+        HashMap<EmptyPair, List<InclusionDependency>>res =new HashMap<>();
+
+        HashMap<CSVColumn, List<CSVColumn>> temp = new HashMap<>();
+
+        loadColumns(tables);
 
         for(String path1: columns.keySet()){
             for(String path2: columns.keySet()){
@@ -197,8 +233,23 @@ public class HelperMain {
                     for(CSVColumn c1: columns.get(path1)) {
                         for(CSVColumn c2: columns.get(path2)) {
                             AnalyzePair analyzePair = new AnalyzePair(c1, c2);
-
                             res.put(analyzePair.toEmpty(), analyzePair.getInclusionDependency());
+                            //temp.put(analyzePair.getColumn1(),
+                            for(InclusionDependency i: res.get(analyzePair.toEmpty())) {
+                                if(Objects.equals(i.getReferencedAttributes()[0], analyzePair.getColumn1().getColumnName())) {
+                                    if (!temp.containsKey(analyzePair.getColumn1())) {
+                                        temp.put(analyzePair.getColumn1(), new ArrayList<>());
+                                    }
+                                    temp.get(analyzePair.getColumn1()).add(analyzePair.getColumn2());
+                                }
+                                if(Objects.equals(i.getReferencedAttributes()[0], analyzePair.getColumn2().getColumnName())) {
+
+                                    if (!temp.containsKey(analyzePair.getColumn2())) {
+                                        temp.put(analyzePair.getColumn2(), new ArrayList<>());
+                                    }
+                                    temp.get(analyzePair.getColumn2()).add(analyzePair.getColumn1());
+                                }
+                            }
                         }
                     }
                 }
@@ -229,7 +280,8 @@ public class HelperMain {
 
 
 
-    public static void main(String[] args) {
+    public static void analyzeAll(){
+
         List<String> solution = new ArrayList<>();
         try {
             solution = getResults();
@@ -331,7 +383,7 @@ public class HelperMain {
 
                 countingMap.put(temp1, counts);
                 countingMap.put(temp2, counts);
-                
+
                  */
 
 
@@ -426,7 +478,7 @@ public class HelperMain {
             //if(counts.get()) {
             System.out.println("match: " + p);
             analyzeTask( p, "match: ");
-                //System.out.println("match: List: " +  countingMap.get(p));
+            //System.out.println("match: List: " +  countingMap.get(p));
             //}
         }
 
@@ -484,5 +536,54 @@ public class HelperMain {
 
 
 
+    }
+
+
+    public static void analyzeSolutions(){
+        List<String> solution = new ArrayList<>();
+        try {
+            solution = getResults();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        File folder = new File("C:\\Users\\johan\\Documents\\GitHub\\ddm-akka\\data\\TPCH");
+        List<File> files  = List.of(Objects.requireNonNull(folder.listFiles()));
+        //System.out.println(files);
+        HashMap<String, List<CSVTable>> tables = new HashMap<>();
+        try {
+            tables = read(files);
+        } catch (CsvValidationException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        List<EmptyPair> pairs = makePairs(tables);
+        List<InclusionDependency> sols = new ArrayList<>();
+
+        for(EmptyPair p: pairs) {
+            //List<InclusionDependency> l = results.get(p);
+            //List<InclusionDependency> temp = new ArrayList<>();
+
+            InclusionDependency temp1 = new InclusionDependency(new File(p.getColumnFile1()), new String[]{p.getColumnName1()},
+                        new File(p.getColumnFile2()), new String[]{p.getColumnName2()});
+            InclusionDependency temp2 = new InclusionDependency(new File(p.getColumnFile2()), new String[]{p.getColumnName2()},
+                        new File(p.getColumnFile1()), new String[]{p.getColumnName1()});
+
+
+            if(solution.contains(temp1.toString())) {
+                sols.add(temp1);
+            }
+            if(solution.contains(temp2.toString())) {
+                sols.add(temp2);
+            }
+
+        }
+
+        for(InclusionDependency id: sols){
+            analyzeTask(tables, id, "only sols: ", solution);
+        }
+    }
+
+
+    public static void main(String[] args) {
+        analyzeSolutions();
     }
 }
