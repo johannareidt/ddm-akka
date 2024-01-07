@@ -57,8 +57,8 @@ public class TestMinerManager {
                 //if (message.getBatch().size() != 0) {
                 //this.inputReaders.get(message.getId()).tell(new InputReader.ReadBatchMessage(this.getContext().getSelf()));
                 DependencyWorker.CreateTableTask ctt = new DependencyWorker.CreateTableTask(
-                        files.get(id).getPath(),
                         batch,
+                        files.get(id).getPath(),
                         headers.get(id));
                 //Handle createTableTask answer answer
                 minerManager.handleTable(ctt.handle().getTable());
@@ -115,7 +115,7 @@ public class TestMinerManager {
         }
 
         log.info("almost done: ");
-        minerManager.getResultsLastAdded();
+        //minerManager.getResultsLastAdded();
         //log.info(minerManager.getAllResults());
 
         TestHelper.compareWithSolution(minerManager.getAllResults());

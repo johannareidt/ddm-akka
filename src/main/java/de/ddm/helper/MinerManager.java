@@ -63,7 +63,7 @@ public class MinerManager {
     public void handleResults(List<InclusionDependency> ids){
         this.last.addAll(ids);
         this.addTask(new DependencyWorker.FilterInclusionDependendies(this.last));
-        this.addTask(new DependencyWorker.FilterInclusionDependendies(this.last));
+        this.addTask(new DependencyWorker.FilterInclusionDependendies(this.res));
     }
 
 
@@ -172,7 +172,7 @@ public class MinerManager {
     public DependencyWorker.Task nextTask(){
         DependencyWorker.Task task = tasks.poll();
         if(task == null){
-            return new DependencyWorker.FilterInclusionDependendies(this.res);
+            return new DependencyWorker.WaitTask();
         }
         return task;
     }
@@ -198,5 +198,9 @@ public class MinerManager {
 
     public void handleFilteredResult(List<InclusionDependency> filteredInclusionDependencies) {
         this.res.addAll(filteredInclusionDependencies);
+    }
+
+    public List<InclusionDependency> getAllResults() {
+        return this.res;
     }
 }
