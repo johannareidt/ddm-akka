@@ -2,8 +2,6 @@ package de.ddm.helper;
 
 import de.ddm.actors.profiling.DependencyWorker;
 import de.ddm.structures.InclusionDependency;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
@@ -30,6 +28,7 @@ public class MinerManager {
 
 
 
+    /*
     private void filterResults(){
         while (!this.last.isEmpty()) {
             this.getResultsLastAdded();
@@ -37,13 +36,19 @@ public class MinerManager {
         }
     }
 
+     */
+
+    /*
     public List<InclusionDependency> getAllResults() {
         filterResults();
         return this.res;
     }
 
+     */
 
 
+
+    /*
     public List<InclusionDependency> getResultsLastAdded(){
         //this.addMetaResultsFromLast();
         //this.last.clear();
@@ -53,8 +58,12 @@ public class MinerManager {
         return temp;
     }
 
+     */
+
     public void handleResults(List<InclusionDependency> ids){
         this.last.addAll(ids);
+        this.addTask(new DependencyWorker.FilterInclusionDependendies(this.last));
+        this.addTask(new DependencyWorker.FilterInclusionDependendies(this.last));
     }
 
 
@@ -162,7 +171,7 @@ public class MinerManager {
     public DependencyWorker.Task nextTask(){
         DependencyWorker.Task task = tasks.poll();
         if(task == null){
-            return new DependencyWorker.WaitTask();
+            return new DependencyWorker.FilterInclusionDependendies(this.res);
         }
         return task;
     }
@@ -186,4 +195,7 @@ public class MinerManager {
     }
 
 
+    public void handleFilteredResult(List<InclusionDependency> filteredInclusionDependencies) {
+        this.res.addAll(filteredInclusionDependencies);
+    }
 }

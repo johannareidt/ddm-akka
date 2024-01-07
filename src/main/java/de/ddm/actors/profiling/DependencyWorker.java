@@ -10,6 +10,7 @@ import akka.actor.typed.receptionist.Receptionist;
 import de.ddm.actors.patterns.LargeMessageProxy;
 import de.ddm.helper.*;
 import de.ddm.serialization.AkkaSerializable;
+import de.ddm.structures.InclusionDependency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,11 +53,9 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 	//public static class
 
+	@AllArgsConstructor
 	public static class AnalyzeTask extends Task{
 		private final AnalyzePair analyzePair;
-		public AnalyzeTask(AnalyzePair analyzePair){
-			this.analyzePair = analyzePair;
-		}
 
 
 		@Override
@@ -92,16 +91,12 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		}
 	}
 
+	@AllArgsConstructor
 	public static class CreateTableTask extends Task{
 		private final List<String[]> batch;
 		private final String filepath;
 		private final String[] header;
 
-		public CreateTableTask(String filepath, List<String[]> batch, String[] header){
-			this.filepath = filepath;
-			this.batch = batch;
-			this.header = header;
-		}
 		@Override
 		public DependencyMiner.Result handle() {
 			DependencyMiner.Result result = new DependencyMiner.Result();
@@ -111,16 +106,11 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		}
 	}
 
+	@AllArgsConstructor
 	public static class MergeBatchColumn extends Task {
 		String path;
 		String cn;
 		List<CSVColumn> columns;
-
-		public MergeBatchColumn(String path, String cn, List<CSVColumn> columns) {
-			this.path = path;
-			this.cn = cn;
-			this.columns = columns;
-		}
 
 		@Override
 		public DependencyMiner.Result handle() {
@@ -131,6 +121,20 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 				entries.addAll(c.getEntries());
 			}
 			result.column = new CSVColumn(path, cn, entries);
+			return result;
+		}
+	}
+
+
+	@AllArgsConstructor
+	public static class FilterInclusionDependendies extends Task{
+
+		List<InclusionDependency> ids;
+
+		@Override
+		public DependencyMiner.Result handle() {
+			DependencyMiner.Result result = new DependencyMiner.Result();
+			result.setFilteredInclusionDependencies(InclusionDependencyFilter.filter(ids));
 			return result;
 		}
 	}

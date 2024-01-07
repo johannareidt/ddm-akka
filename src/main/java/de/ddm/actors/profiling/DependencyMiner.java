@@ -83,6 +83,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	@Setter
 	@NoArgsConstructor
 	public static class Result{
+		boolean hasFilteredResult = false;
+		List<InclusionDependency> filteredInclusionDependencies = new ArrayList<>();
 		boolean hasResult = false;
 		EmptyPair emptyPair = null;
 		List<InclusionDependency> inclusionDependencies = new ArrayList<>();
@@ -183,8 +185,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 			this.inputReaders.get(message.getId()).tell(new InputReader.ReadBatchMessage(this.getContext().getSelf()));
 
 			this.minerManager.addTask(new DependencyWorker.CreateTableTask(
-					inputFiles[message.id].getPath(),
 					message.batch,
+					inputFiles[message.id].getPath(),
 					this.headerLines[message.id]));
 
 
@@ -242,9 +244,13 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 
 		 */
 		if(message.getResult() != null) {
+			if(message.getResult().hasFilteredResult){
+				minerManager.handleFilteredResult(message.getResult().filteredInclusionDependencies);
+				this.resultCollector.tell(new ResultCollector.ResultMessage(message.getResult().filteredInclusionDependencies));
+			}
 			if(message.getResult().isHasResult()) {
 				minerManager.handleResults(message.getResult().getInclusionDependencies());
-				this.resultCollector.tell(new ResultCollector.ResultMessage(minerManager.getResultsLastAdded()));
+
 			}
 			if(message.getResult().getColumn() != null){
 				minerManager.handleColumn(message.getResult().getColumn());

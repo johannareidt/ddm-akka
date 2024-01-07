@@ -72,7 +72,7 @@ public class AnalyzePair implements Serializable {
 
         log.info("\n");
         log.info("Pair: "+this.toEmpty().toString());
-        logged("Pair: ");
+        //logged("Pair: ");
 
         if(firstInSecond>0){
             if(firstInSecond==1 && firstNotInSecond==0){
