@@ -14,6 +14,13 @@ public class EmptyPair {
     String columnName1;
     String columnName2;
 
+    public EmptyPair(String columnFile1, String columnFile2, String columnName1, String columnName2) {
+        this.columnFile1 = columnFile1;
+        this.columnFile2 = columnFile2;
+        this.columnName1 = columnName1;
+        this.columnName2 = columnName2;
+    }
+
     public EmptyPair(CSVColumn column, CSVColumn oc) {
         this.columnName1 = column.getColumnName();
         this.columnFile1 = column.getFilePath();
