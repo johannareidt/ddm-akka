@@ -1,13 +1,18 @@
 package de.ddm.helper;
 
 import de.ddm.structures.InclusionDependency;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.impl.SimpleLog;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class InclusionDependencyFilter {
+
+    private static final Log log = new SimpleLog("InclusionDependencyFilter");
 
     private static List<InclusionDependency> metaInclusionDependencies(InclusionDependency id1, InclusionDependency id2){
         List<InclusionDependency> temp = new ArrayList<>();
@@ -40,9 +45,40 @@ public class InclusionDependencyFilter {
         return !id.getReferencedFile().getPath().equals(id.getDependentFile().getPath());
     }
 
-    public static List<InclusionDependency> filter(List<InclusionDependency> ids){
-        ids = ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList());
+    private static List<InclusionDependency> filterWithTemp(List<InclusionDependency> ids, List<InclusionDependency> toAdd){
+        log.info("filterWithTemp: temp is empty: ");
+        for(InclusionDependency id: new ArrayList<>(toAdd)){
+            if(ids.contains(id)) toAdd.remove(id);
+        }
+        if(toAdd.isEmpty()){
+            log.info("filterWithTemp: temp is empty: ");
+            return new ArrayList<>(new HashSet<>(ids));
+        }
+        ids.addAll(toAdd);
         List<InclusionDependency> temp = new ArrayList<>();
+        for(InclusionDependency id: ids){
+            for(InclusionDependency j: toAdd) {
+                temp.addAll(metaInclusionDependencies(id, j));
+            }
+
+        }
+        return filterWithTemp(ids, temp);
+    }
+
+    public static List<InclusionDependency> filter(List<InclusionDependency> ids){
+        log.info("filter:  ");
+        ids = new ArrayList<>(new HashSet<>( ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList())));
+        List<InclusionDependency> temp = new ArrayList<>();
+        for(InclusionDependency id: ids){
+            for(InclusionDependency j: ids){
+                temp.addAll(metaInclusionDependencies(id, j));
+            }
+        }
+        return filterWithTemp(ids, temp);
+
+
+
+        /*
         boolean added = true;
         int from = 0;
         while(added) {
@@ -57,5 +93,8 @@ public class InclusionDependencyFilter {
             temp.clear();
         }
         return ids;
+
+         */
+        //return ids;
     }
 }
