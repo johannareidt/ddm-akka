@@ -48,6 +48,13 @@ public class InclusionDependencyFilter {
 
     private static List<InclusionDependency> filterWithTemp(List<InclusionDependency> ids, List<InclusionDependency> toAdd){
         log.info("filterWithTemp: ");
+
+        if(ids == null){
+            ids = new ArrayList<>();
+        }
+        if(toAdd == null){
+            toAdd = new ArrayList<>();
+        }
         toAdd.removeIf(ids::contains);
         if(toAdd.isEmpty()){
             log.info("filterWithTemp: temp is empty: ");
@@ -66,6 +73,9 @@ public class InclusionDependencyFilter {
 
     public static List<InclusionDependency> filter(List<InclusionDependency> ids){
         log.info("filter:  ");
+        if(ids == null){
+            ids = new ArrayList<>();
+        }
         ids = new ArrayList<>(new HashSet<>( ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList())));
         List<InclusionDependency> temp = new ArrayList<>();
         for(InclusionDependency id: ids){
@@ -100,6 +110,12 @@ public class InclusionDependencyFilter {
 
     public static List<InclusionDependency> getMoreWithTemp(List<InclusionDependency> ids, List<InclusionDependency> toAdd) {
         log.info("getMoreWithTemp:  ");
+        if(ids == null){
+            ids = new ArrayList<>();
+        }
+        if(toAdd == null){
+            toAdd = new ArrayList<>();
+        }
         toAdd.removeIf(ids::contains);
         if(toAdd.isEmpty()){
             log.info("getMoreWithTemp: temp is empty: ");
@@ -118,7 +134,10 @@ public class InclusionDependencyFilter {
     }
     public static List<InclusionDependency> getMore(List<InclusionDependency> ids) {
         log.info("getMore:  ");
-        ids = new ArrayList<>(new HashSet<>( ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList())));
+        if(ids == null){
+            return new ArrayList<>();
+        }
+        ids =  ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList());
         List<InclusionDependency> temp = new ArrayList<>();
         for(InclusionDependency id: ids){
             for(InclusionDependency j: ids){

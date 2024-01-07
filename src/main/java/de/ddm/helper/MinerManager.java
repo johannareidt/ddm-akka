@@ -180,13 +180,14 @@ public class MinerManager {
     public DependencyWorker.Task nextTask(){
         DependencyWorker.Task task = tasks.poll();
         if(task == null){
-            checkAllIdleWorkerWithResult();
-            return new DependencyWorker.WaitTask();
+            //checkAllIdleWorkerWithResult();
+            return new DependencyWorker.LastFilter();
         }
         task.load(loader);
         return task;
     }
 
+    /*
     private void checkAllIdleWorkerWithResult(){
         if(this.res.size()>0){
             for(DependencyWorker.Task t:this.currentlyDoing.values()){
@@ -198,6 +199,8 @@ public class MinerManager {
             this.addTask(new DependencyWorker.LastFilter());
         }
     }
+
+     */
 
 
     public void putCurrently(int indexOfWorker, DependencyWorker.Task task) {
