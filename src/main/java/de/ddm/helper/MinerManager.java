@@ -21,9 +21,9 @@ public class MinerManager {
     //private final HashMap<Pair<String, String>, List<Pair<String, String>>> dependencies = new HashMap<>();
     private final HashMap<Integer, DependencyWorker.Task> currentlyDoing = new HashMap<>();
 
-    private List<InclusionDependency> res = new ArrayList<>();
+    private final List<InclusionDependency> res = new ArrayList<>();
     private final List<InclusionDependency> last = new ArrayList<>();
-    private HashMap<String, HashMap<String, List<CSVColumn>>> nextTables = new HashMap<>();
+    private final HashMap<String, HashMap<String, List<CSVColumn>>> nextTables = new HashMap<>();
 
 
     // INCLUSION-DEPENDENCIES
@@ -157,7 +157,7 @@ public class MinerManager {
         for (String cn: columns.keySet()) {
             this.tasks.add(new DependencyWorker.MergeBatchColumn(path, cn));
         }
-        this.tables.remove(path);
+        //this.tables.rem ove(path);
 
         this.nextTables.put(path, columns);
     }
@@ -214,19 +214,26 @@ public class MinerManager {
             String path,
             String columnName
     ){
-        return MinerManager.this.columns.get(path).stream().filter(c-> Objects.equals(c.getColumnName(), columnName)).findFirst().get();
+        return this.columns.get(path)
+                .stream()
+                .filter(column ->
+                        columnName
+                                .equals(
+                                        column.getColumnName()))
+                .findFirst()
+                .get();
     }
     public class TaskLoader {
         public AnalyzePair getAnalyzerPair(EmptyPair emptyPair) {
             return new AnalyzePair(
-                    get(emptyPair.columnFile1, emptyPair.columnName1),
-                    get(emptyPair.columnFile2, emptyPair.columnName2)
+                    MinerManager.this.get(emptyPair.columnFile1, emptyPair.columnName1),
+                    MinerManager.this.get(emptyPair.columnFile2, emptyPair.columnName2)
                     );
         }
 
         public List<CSVColumn> getColumns(String path, String cn) {
             List<CSVColumn> temp =  MinerManager.this.nextTables.get(path).get(cn);
-            MinerManager.this.nextTables.get(path).remove(cn);
+            //MinerManager.this.nextTables.get(path).rem ove(cn);
             return temp;
         }
     }

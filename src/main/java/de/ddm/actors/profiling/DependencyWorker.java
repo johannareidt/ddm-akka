@@ -63,7 +63,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 	public static class AnalyzeTask extends Task{
 		private AnalyzePair analyzePair;
-		private EmptyPair emptyPair;
+		private final EmptyPair emptyPair;
 
 		public AnalyzeTask(EmptyPair emptyPair){
 			this.emptyPair = emptyPair;
@@ -75,7 +75,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			log.info("AnalyzeTask: handle");
 
 			DependencyMiner.Result result = new DependencyMiner.Result();
-			result.setEmptyPair(analyzePair.toEmpty());
+			result.setEmptyPair(emptyPair);
 			result.setHasResult(true);
 
 
