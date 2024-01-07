@@ -7,7 +7,12 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.impl.SimpleLog;
+
 public class MinerManager {
+
+    private static final Log log = new SimpleLog("MinerManager");
 
 
     private final HashMap<String, List<CSVTable>> tables = new HashMap<>();

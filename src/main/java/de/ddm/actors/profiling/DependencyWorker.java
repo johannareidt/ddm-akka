@@ -10,7 +10,6 @@ import akka.actor.typed.receptionist.Receptionist;
 import de.ddm.actors.patterns.LargeMessageProxy;
 import de.ddm.helper.*;
 import de.ddm.serialization.AkkaSerializable;
-import de.ddm.structures.InclusionDependency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,7 +47,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 	@Getter
 	@AllArgsConstructor
 	public static abstract class Task {
-		abstract DependencyMiner.Result handle();
+		public abstract DependencyMiner.Result handle();
 	}
 
 	//public static class
@@ -61,7 +60,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 
 		@Override
-		DependencyMiner.Result handle() {
+		public DependencyMiner.Result handle() {
 
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.setEmptyPair(analyzePair.toEmpty());
@@ -98,13 +97,13 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		private final String filepath;
 		private final String[] header;
 
-		CreateTableTask(String filepath,List<String[]> batch, String[] header){
+		public CreateTableTask(String filepath, List<String[]> batch, String[] header){
 			this.filepath = filepath;
 			this.batch = batch;
 			this.header = header;
 		}
 		@Override
-		DependencyMiner.Result handle() {
+		public DependencyMiner.Result handle() {
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.table = new CSVTable(filepath, batch, header);
 			result.table.split();
@@ -124,7 +123,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		}
 
 		@Override
-		DependencyMiner.Result handle() {
+		public DependencyMiner.Result handle() {
 
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			ArrayList<String> entries = new ArrayList<>();
@@ -164,7 +163,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 	 */
 	public static class WaitTask extends Task {
 		@Override
-		DependencyMiner.Result handle() {
+		public DependencyMiner.Result handle() {
 			try {
 				wait(1000);
 			} catch (InterruptedException e) {

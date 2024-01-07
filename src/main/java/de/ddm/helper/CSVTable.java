@@ -10,15 +10,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.impl.SimpleLog;
 
 
 public class CSVTable implements Serializable {
 
-    private static final String TAG = "CSVTable";
-    private final static Logger LOGGER =
-            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private static final Log log = new SimpleLog("CSVTable");
     @Getter
     private final String filepath;
     @Getter
@@ -50,7 +48,9 @@ public class CSVTable implements Serializable {
     }
 
     public String getColumnName(int i){
-        return getColumnNames()[i];
+        if(i < this.getNumberOfColumns()) return getColumnNames()[i];
+        log.info("overflow: column: access "+i+" ,max: "+this.getNumberOfColumns());
+        return "Attr_"+i;
     }
 
     /*
@@ -69,7 +69,7 @@ public class CSVTable implements Serializable {
 
     public void split(){
         HashMap<Integer, List<String>> temp = new HashMap<>();
-        int s = getNumberOfColumns();
+        int s = getNumberOfColumns()+5; //+5 als Überlaufschutz
         for(int i=0; i<s; i++){
             temp.put(i, new ArrayList<String>());
         }
@@ -77,7 +77,7 @@ public class CSVTable implements Serializable {
         iterator.next(); //ignore columnName row
         while (iterator.hasNext()){
             String[] row = iterator.next();
-            for(int i=0; i<s; i++){
+            for(int i=0; i<row.length; i++){
                 temp.get(i).add(row[i]);
             }
         }

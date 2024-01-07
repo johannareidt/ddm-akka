@@ -179,8 +179,6 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	}
 
 	private Behavior<Message> handle(BatchMessage message) {
-		// Ignoring batch content for now ... but I could do so much with it.
-
 		if (message.getBatch().size() != 0) {
 			this.inputReaders.get(message.getId()).tell(new InputReader.ReadBatchMessage(this.getContext().getSelf()));
 
