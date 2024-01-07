@@ -68,8 +68,9 @@ public class CSVTable implements Serializable {
 
 
     public void split(){
+        log.info("split: "+Arrays.toString(header));
         HashMap<Integer, List<String>> temp = new HashMap<>();
-        int s = getNumberOfColumns()+5; //+5 als Überlaufschutz
+        int s = getNumberOfColumns(); //+5 als Überlaufschutz
         for(int i=0; i<s; i++){
             temp.put(i, new ArrayList<String>());
         }
@@ -77,8 +78,12 @@ public class CSVTable implements Serializable {
         iterator.next(); //ignore columnName row
         while (iterator.hasNext()){
             String[] row = iterator.next();
+            int mod =  (getNumberOfColumns()==row.length)?0:1; //skip id if neccesarry
             for(int i=0; i<row.length; i++){
-                temp.get(i).add(row[i]);
+                temp.get(i).add(row[i+mod]);
+            }
+            if(row.length>getNumberOfColumns()){
+                log.error("split: overflow: row: "+ Arrays.toString(row));
             }
         }
         for(int i=0; i<s; i++){

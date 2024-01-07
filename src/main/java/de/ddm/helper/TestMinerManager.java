@@ -13,7 +13,9 @@ import org.apache.commons.logging.impl.SimpleLog;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TestMinerManager {
 
@@ -39,7 +41,7 @@ public class TestMinerManager {
         //Beginning ReadBatchMessages
         //          ReadHeaderMessages
         List<String[]> headers = TestHelper.getHeaders(files);
-        log.info("headers: "+headers);
+        log.info("headers: "+headers.stream().map(Arrays::toString).collect(Collectors.toList()));
 
 
         int id = 0;

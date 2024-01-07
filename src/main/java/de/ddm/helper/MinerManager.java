@@ -59,12 +59,16 @@ public class MinerManager {
         while (ids.contains(null)){
             ids.remove(null);
         }
+        List<InclusionDependency> temp = new ArrayList<>();
         for(InclusionDependency checkAgainst: res){
-            ids.forEach(i-> ids.addAll(metaInclusionDependencies(checkAgainst, i)));
+            ids.forEach(i-> temp.addAll(metaInclusionDependencies(checkAgainst, i)));
         }
+        ids.addAll(temp);
+        temp.clear();
         for(InclusionDependency checkAgainst: ids){
-            ids.forEach(i-> ids.addAll(metaInclusionDependencies(checkAgainst, i)));
+            ids.forEach(i-> temp.addAll(metaInclusionDependencies(checkAgainst, i)));
         }
+        ids.addAll(temp);
         return ids;
     }
 
