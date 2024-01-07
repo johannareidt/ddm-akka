@@ -19,11 +19,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.impl.SimpleLog;
+
 public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message> {
 
 	////////////////////
 	// Actor Messages //
 	////////////////////
+
+	private static final Log log = new SimpleLog("DependencyWorker");
 
 	public interface Message extends AkkaSerializable {
 	}
@@ -60,6 +65,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 		@Override
 		public DependencyMiner.Result handle() {
+			log.info("AnalyzeTask: handle");
 
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.setEmptyPair(analyzePair.toEmpty());
@@ -99,6 +105,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 		@Override
 		public DependencyMiner.Result handle() {
+			log.info("CreateTableTask: handle");
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.table = new CSVTable(filepath, batch, header);
 			result.table.split();
@@ -114,6 +121,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 		@Override
 		public DependencyMiner.Result handle() {
+			log.info("MergeBatchColumn: handle");
 
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			ArrayList<String> entries = new ArrayList<>();
@@ -133,6 +141,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 		@Override
 		public DependencyMiner.Result handle() {
+			log.info("FilterInclusionDependendies: handle");
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.setFilteredInclusionDependencies(InclusionDependencyFilter.filter(ids));
 			return result;
@@ -168,12 +177,16 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 	public static class WaitTask extends Task {
 		@Override
 		public DependencyMiner.Result handle() {
+			log.info("WaitTask: handle");
+			DependencyMiner.Result result = new DependencyMiner.Result();
 			try {
 				wait(1000);
 			} catch (InterruptedException e) {
-				//TODO: log
+				//TODO: logWaitTask
+				log.error("WaitTask: handle",e);
 			}
-			return new DependencyMiner.Result();
+			result.setWaited(true);
+			return result;
 		}
 	}
 

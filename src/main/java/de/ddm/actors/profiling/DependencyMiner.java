@@ -83,6 +83,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	@Setter
 	@NoArgsConstructor
 	public static class Result{
+		boolean waited = false;
 		boolean hasFilteredResult = false;
 		List<InclusionDependency> filteredInclusionDependencies = new ArrayList<>();
 		boolean hasResult = false;
@@ -248,14 +249,14 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 				minerManager.handleFilteredResult(message.getResult().filteredInclusionDependencies);
 				this.resultCollector.tell(new ResultCollector.ResultMessage(message.getResult().filteredInclusionDependencies));
 			}
-			if(message.getResult().isHasResult()) {
+			else if(message.getResult().isHasResult()) {
 				minerManager.handleResults(message.getResult().getInclusionDependencies());
 
 			}
-			if(message.getResult().getColumn() != null){
+			else if(message.getResult().getColumn() != null){
 				minerManager.handleColumn(message.getResult().getColumn());
 			}
-			if(message.getResult().getTable() != null){
+			else if(message.getResult().getTable() != null){
 				minerManager.handleTable(message.getResult().getTable());
 			}
 		}

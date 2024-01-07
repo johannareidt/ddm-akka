@@ -7,6 +7,7 @@ import com.opencsv.exceptions.CsvValidationException;
 import de.ddm.actors.profiling.DependencyMiner;
 import de.ddm.actors.profiling.DependencyWorker;
 import de.ddm.actors.profiling.ResultCollector;
+import de.ddm.structures.InclusionDependency;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.SimpleLog;
 
@@ -22,6 +23,7 @@ public class TestMinerManager {
     private static final Log log = new SimpleLog("TestMinerManager");
 
     public static void main(String[] args) {
+        List<InclusionDependency> res = new ArrayList<>();
         MinerManager minerManager = new MinerManager();
         List<File> files = TestHelper.getFiles();
         log.info("files: "+files);
@@ -90,6 +92,11 @@ public class TestMinerManager {
         while ( !( t instanceof DependencyWorker.WaitTask)){
             DependencyMiner.Result result = t.handle();
             if (result != null) {
+                if(result.isHasFilteredResult()){
+                    log.info("nextTask: handleFilteredResult ");
+                    minerManager.handleFilteredResult(result.getFilteredInclusionDependencies());
+                    res.addAll(result.getFilteredInclusionDependencies());
+                }
                 if (result.isHasResult()) {
                     log.info("nextTask: handleResults ");
                     minerManager.handleResults(result.getInclusionDependencies());
@@ -118,7 +125,7 @@ public class TestMinerManager {
         //minerManager.getResultsLastAdded();
         //log.info(minerManager.getAllResults());
 
-        TestHelper.compareWithSolution(minerManager.getAllResults());
+        TestHelper.compareWithSolution(res);
 
 
 
