@@ -4,6 +4,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import de.ddm.singletons.DomainConfigurationSingleton;
 import de.ddm.singletons.InputConfigurationSingleton;
+import de.ddm.structures.InclusionDependency;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -152,6 +153,61 @@ public class TestHelper {
         //Close the input stream
         fstream.close();
         return lines;
+    }
+
+    public static void compareWithSolution(List<InclusionDependency> results){
+
+        List<String> solution = new ArrayList<>();
+        try {
+            solution = TestHelper.getResults();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<InclusionDependency> match = new ArrayList<>();
+        List<InclusionDependency> falseMatch = new ArrayList<>();
+        List<String> shouldBeMatch = new ArrayList<>();
+
+        List<String> contained = new ArrayList<>();
+
+
+        for(InclusionDependency id: results){
+            if(solution.contains(id.toString())){
+                match.add(id);
+                contained.add(id.toString());
+            }else{
+                falseMatch.add(id);
+            }
+        }
+
+        for(String s: solution){
+            if(!contained.contains(s)) shouldBeMatch.add(s);
+        }
+
+
+
+
+        System.out.println("match: length: "+match.size());
+        for(InclusionDependency p: match) {
+            System.out.println("match:  " + p);
+            //analyzeTask( p, "match: ");
+
+        }
+
+        //System.out.println("correctNotMatch: length: "+correctNotMatch.size());
+
+
+        System.out.println("falseMatch: length: "+falseMatch.size());
+        for(InclusionDependency p: falseMatch) {
+            System.out.println("falseMatch:  " + p);
+            //analyzeTask( p, "falseMatch: ");
+        }
+        System.out.println("shouldBeMatch: length: "+shouldBeMatch.size());
+        for(String p: shouldBeMatch) {
+            System.out.println("shouldBeMatch:  " + p);
+            //analyzeTask(p, "shouldBeMatch: ");
+        }
+
     }
 
 

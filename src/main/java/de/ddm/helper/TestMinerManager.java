@@ -91,13 +91,17 @@ public class TestMinerManager {
             DependencyMiner.Result result = t.handle();
             if (result != null) {
                 if (result.isHasResult()) {
+                    log.info("nextTask: handleResults ");
                     minerManager.handleResults(result.getInclusionDependencies());
                     //this.resultCollector.tell(new ResultCollector.ResultMessage(minerManager.getResultsLastAdded()));
+                    //log.info("nextTask: get last added res: "+minerManager.getResultsLastAdded());
                 }
                 if (result.getColumn() != null) {
+                    log.info("nextTask: handleColumn ");
                     minerManager.handleColumn(result.getColumn());
                 }
                 if (result.getTable() != null) {
+                    log.info("nextTask: getTable ");
                     minerManager.handleTable(result.getTable());
                 }
             }
@@ -109,6 +113,12 @@ public class TestMinerManager {
             t = minerManager.nextTask();
 
         }
+
+        log.info("almost done: ");
+        minerManager.getResultsLastAdded();
+        //log.info(minerManager.getAllResults());
+
+        TestHelper.compareWithSolution(minerManager.getAllResults());
 
 
 

@@ -21,72 +21,42 @@ public class MinerManager {
     //private final HashMap<Pair<String, String>, List<Pair<String, String>>> dependencies = new HashMap<>();
     private final HashMap<Integer, DependencyWorker.Task> currentlyDoing = new HashMap<>();
 
-    private final List<InclusionDependency> res = new ArrayList<>();
+    private List<InclusionDependency> res = new ArrayList<>();
     private final List<InclusionDependency> last = new ArrayList<>();
 
 
 
     // INCLUSION-DEPENDENCIES
 
-    private void addMetaResultsFromLast(){
-        List<InclusionDependency> temp = new ArrayList<>(last);
-        //last.clear();
-        for(InclusionDependency id: res){
-            for(InclusionDependency toAdd: temp){
-                last.addAll(metaInclusionDependencies(id, toAdd));
-            }
+
+
+    private void filterResults(){
+        while (!this.last.isEmpty()) {
+            this.getResultsLastAdded();
+            this.res = InclusionDependencyFilter.filter(this.res);
         }
-        res.addAll(temp);
     }
 
-
-    private List<InclusionDependency> metaInclusionDependencies(InclusionDependency id1, InclusionDependency id2){
-        List<InclusionDependency> temp = new ArrayList<>();
-        if(id1.getDependentFile().getPath().equals(id2.getReferencedFile().getPath())){
-            temp.add(new InclusionDependency(
-                    id1.getReferencedFile(), id1.getReferencedAttributes(),
-                    id2.getDependentFile(), id2.getDependentAttributes()));
-        }
-        if(id1.getReferencedFile().getPath().equals(id2.getDependentFile().getPath())){
-            temp.add(new InclusionDependency(
-                    id2.getReferencedFile(), id2.getReferencedAttributes(),
-                    id1.getDependentFile(), id1.getDependentAttributes()));
-        }
-        return temp;
+    public List<InclusionDependency> getAllResults() {
+        filterResults();
+        return this.res;
     }
-
-    private List<InclusionDependency> checkAllInclusionDependency(List<InclusionDependency> ids){
-        while (ids.contains(null)){
-            ids.remove(null);
-        }
-        List<InclusionDependency> temp = new ArrayList<>();
-        for(InclusionDependency checkAgainst: res){
-            ids.forEach(i-> temp.addAll(metaInclusionDependencies(checkAgainst, i)));
-        }
-        ids.addAll(temp);
-        temp.clear();
-        for(InclusionDependency checkAgainst: ids){
-            ids.forEach(i-> temp.addAll(metaInclusionDependencies(checkAgainst, i)));
-        }
-        ids.addAll(temp);
-        return ids;
-    }
-
 
 
 
     public List<InclusionDependency> getResultsLastAdded(){
-        this.addMetaResultsFromLast();
+        //this.addMetaResultsFromLast();
         //this.last.clear();
-        List<InclusionDependency> temp = new ArrayList<>(this.last);
-        this.res.addAll(this.last);
+        List<InclusionDependency> temp = new ArrayList<>(InclusionDependencyFilter.filter(this.last));
+        this.res.addAll(temp);
         this.last.clear();
         return temp;
     }
 
     public void handleResults(List<InclusionDependency> ids){
-        this.last.addAll(this.checkAllInclusionDependency(ids));
+        this.last.addAll(ids);
     }
+
 
 
 
@@ -214,5 +184,6 @@ public class MinerManager {
         this.tasks.add(this.currentlyDoing.get(workerID));
         this.currentlyDoing.remove(workerID);
     }
+
 
 }
