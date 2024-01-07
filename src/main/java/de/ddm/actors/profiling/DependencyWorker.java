@@ -170,6 +170,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		public DependencyMiner.Result handle() {
 			log.info("FilterInclusionDependendies: handle");
 			DependencyMiner.Result result = new DependencyMiner.Result();
+			result.hasFilteredResult = true;
 			result.setFilteredInclusionDependencies(InclusionDependencyFilter.filter(ids));
 			return result;
 		}
@@ -187,6 +188,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		public DependencyMiner.Result handle() {
 			log.info("FilterInclusionDependendies: handle");
 			DependencyMiner.Result result = new DependencyMiner.Result();
+			result.hasFilteredResult=true;
 			result.setFilteredInclusionDependencies(InclusionDependencyFilter.getMore(ids));
 			result.setLast(true);
 			return result;
