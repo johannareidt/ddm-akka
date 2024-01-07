@@ -62,8 +62,12 @@ public class MinerManager {
 
      */
 
-    public void handleResults(List<InclusionDependency> ids){
-        this.addTask(new DependencyWorker.FilterInclusionDependendies(ids));
+    public void handleResults(List<InclusionDependency> ids) {
+        if (ids != null){
+            if (!ids.isEmpty()) {
+                this.addTask(new DependencyWorker.FilterInclusionDependendies(ids));
+            }
+        }
         //this.addTask(new DependencyWorker.FilterInclusionDependendies(this.res));
     }
 
