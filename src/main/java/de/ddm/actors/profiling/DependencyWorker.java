@@ -22,8 +22,6 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.SimpleLog;
 
-import javax.management.ConstructorParameters;
-
 public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message> {
 
 	////////////////////
@@ -162,13 +160,13 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 
 
 	@AllArgsConstructor
-	public static class FilterInclusionDependendies extends Task{
+	public static class FilterInclusionDependencies extends Task{
 
 		List<InclusionDependency> ids;
 
 		@Override
 		public DependencyMiner.Result handle() {
-			log.info("FilterInclusionDependendies: handle");
+			log.info("FilterInclusionDependencies: handle");
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.hasFilteredResult = true;
 			result.setFilteredInclusionDependencies(InclusionDependencyFilter.filter(ids));
@@ -186,7 +184,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		List<InclusionDependency> ids;
 		@Override
 		public DependencyMiner.Result handle() {
-			log.info("FilterInclusionDependencies: handle");
+			log.info("LastFilter: handle");
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.hasFilteredResult=true;
 			result.setFilteredInclusionDependencies(InclusionDependencyFilter.getMore(ids));

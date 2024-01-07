@@ -1,7 +1,5 @@
 package de.ddm.helper;
 
-import akka.cluster.ddata.LWWMap;
-import de.ddm.actors.profiling.DependencyMiner;
 import de.ddm.actors.profiling.DependencyWorker;
 import de.ddm.structures.InclusionDependency;
 
@@ -65,7 +63,7 @@ public class MinerManager {
     public void handleResults(List<InclusionDependency> ids) {
         if (ids != null){
             if (!ids.isEmpty()) {
-                this.addTask(new DependencyWorker.FilterInclusionDependendies(ids));
+                this.addTask(new DependencyWorker.FilterInclusionDependencies(ids));
             }
         }
         //this.addTask(new DependencyWorker.FilterInclusionDependendies(this.res));
