@@ -155,6 +155,7 @@ public class MinerManager {
         for (String cn: columns.keySet()) {
             this.tasks.add(new DependencyWorker.MergeBatchColumn(path, cn, columns.get(cn)));
         }
+        this.tables.remove(path);
     }
 
 
