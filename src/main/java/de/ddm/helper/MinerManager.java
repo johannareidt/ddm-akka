@@ -1,5 +1,6 @@
 package de.ddm.helper;
 
+import akka.cluster.ddata.LWWMap;
 import de.ddm.actors.profiling.DependencyWorker;
 import de.ddm.structures.InclusionDependency;
 
@@ -11,6 +12,7 @@ import org.apache.commons.logging.impl.SimpleLog;
 public class MinerManager {
 
     private static final Log log = new SimpleLog("MinerManager");
+    private final TaskLoader loader = new TaskLoader();
 
 
     private final HashMap<String, List<CSVTable>> tables = new HashMap<>();
@@ -21,7 +23,7 @@ public class MinerManager {
 
     private List<InclusionDependency> res = new ArrayList<>();
     private final List<InclusionDependency> last = new ArrayList<>();
-
+    private HashMap<String, HashMap<String, List<CSVColumn>>> nextTables = new HashMap<>();
 
 
     // INCLUSION-DEPENDENCIES
@@ -63,7 +65,7 @@ public class MinerManager {
     public void handleResults(List<InclusionDependency> ids){
         this.last.addAll(ids);
         this.addTask(new DependencyWorker.FilterInclusionDependendies(this.last));
-        this.addTask(new DependencyWorker.FilterInclusionDependendies(this.res));
+        //this.addTask(new DependencyWorker.FilterInclusionDependendies(this.res));
     }
 
 
@@ -86,7 +88,7 @@ public class MinerManager {
         for(String path: this.columns.keySet()){
             if(!Objects.equals(path, column.getFilePath())){
                 for (CSVColumn oc : this.columns.get(path)){
-                    tasks.add(new DependencyWorker.AnalyzeTask(new AnalyzePair(column, oc)));
+                    tasks.add(new DependencyWorker.AnalyzeTask(new EmptyPair(column, oc)));
                 }
             }
 
@@ -153,9 +155,11 @@ public class MinerManager {
             }
         }
         for (String cn: columns.keySet()) {
-            this.tasks.add(new DependencyWorker.MergeBatchColumn(path, cn, columns.get(cn)));
+            this.tasks.add(new DependencyWorker.MergeBatchColumn(path, cn));
         }
         this.tables.remove(path);
+
+        this.nextTables.put(path, columns);
     }
 
 
@@ -174,6 +178,7 @@ public class MinerManager {
         if(task == null){
             return new DependencyWorker.WaitTask();
         }
+        task.load(loader);
         return task;
     }
 
@@ -202,5 +207,27 @@ public class MinerManager {
 
     public List<InclusionDependency> getAllResults() {
         return this.res;
+    }
+
+
+    private CSVColumn get(
+            String path,
+            String columnName
+    ){
+        return MinerManager.this.columns.get(path).stream().filter(c-> Objects.equals(c.getColumnName(), columnName)).findFirst().get();
+    }
+    public class TaskLoader {
+        public AnalyzePair getAnalyzerPair(EmptyPair emptyPair) {
+            return new AnalyzePair(
+                    get(emptyPair.columnFile1, emptyPair.columnName1),
+                    get(emptyPair.columnFile2, emptyPair.columnName2)
+                    );
+        }
+
+        public List<CSVColumn> getColumns(String path, String cn) {
+            List<CSVColumn> temp =  MinerManager.this.nextTables.get(path).get(cn);
+            MinerManager.this.nextTables.get(path).remove(cn);
+            return temp;
+        }
     }
 }

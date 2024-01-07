@@ -22,6 +22,8 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.SimpleLog;
 
+import javax.management.ConstructorParameters;
+
 public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message> {
 
 	////////////////////
@@ -54,13 +56,18 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 	@AllArgsConstructor
 	public static abstract class Task {
 		public abstract DependencyMiner.Result handle();
+		public abstract void load(MinerManager.TaskLoader loader);
 	}
 
 	//public static class
 
-	@AllArgsConstructor
 	public static class AnalyzeTask extends Task{
-		private final AnalyzePair analyzePair;
+		private AnalyzePair analyzePair;
+		private EmptyPair emptyPair;
+
+		public AnalyzeTask(EmptyPair emptyPair){
+			this.emptyPair = emptyPair;
+		}
 
 
 		@Override
@@ -95,6 +102,11 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			result.getInclusionDependencies().addAll(analyzePair.getInclusionDependency());
 			return result;
 		}
+
+		@Override
+		public void load(MinerManager.TaskLoader loader) {
+			analyzePair = loader.getAnalyzerPair(emptyPair);
+		}
 	}
 
 	@AllArgsConstructor
@@ -111,13 +123,22 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			result.table.split();
 			return result;
 		}
+
+		@Override
+		public void load(MinerManager.TaskLoader loader) {
+			//do nothing
+		}
 	}
 
-	@AllArgsConstructor
 	public static class MergeBatchColumn extends Task {
 		String path;
 		String cn;
 		List<CSVColumn> columns;
+
+		public MergeBatchColumn(String path, String cn) {
+			this.path = path;
+			this.cn = cn;
+		}
 
 		@Override
 		public DependencyMiner.Result handle() {
@@ -131,6 +152,13 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			result.column = new CSVColumn(path, cn, entries);
 			return result;
 		}
+
+		@Override
+		public void load(MinerManager.TaskLoader loader) {
+			this.columns = loader.getColumns(path, cn);
+		}
+
+
 	}
 
 
@@ -145,6 +173,11 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.setFilteredInclusionDependencies(InclusionDependencyFilter.filter(ids));
 			return result;
+		}
+
+		@Override
+		public void load(MinerManager.TaskLoader loader) {
+			// do nothing
 		}
 	}
 
@@ -187,6 +220,11 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			}
 			result.setWaited(true);
 			return result;
+		}
+
+		@Override
+		public void load(MinerManager.TaskLoader loader) {
+			//do nothing
 		}
 	}
 
