@@ -56,6 +56,7 @@ public class InclusionDependencyFilter {
             toAdd = new ArrayList<>();
         }
         toAdd.removeIf(ids::contains);
+        toAdd.removeIf(InclusionDependencyFilter::allowedInclusionDependency);
         if(toAdd.isEmpty()){
             log.info("filterWithTemp: temp is empty: ");
             return new ArrayList<>(new HashSet<>(ids));
@@ -76,7 +77,8 @@ public class InclusionDependencyFilter {
         if(ids == null){
             ids = new ArrayList<>();
         }
-        ids = new ArrayList<>(new HashSet<>( ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList())));
+        ids.removeIf(InclusionDependencyFilter::allowedInclusionDependency);
+        ids = new ArrayList<>(new HashSet<>(ids));
         List<InclusionDependency> temp = new ArrayList<>();
         for(InclusionDependency id: ids){
             for(InclusionDependency j: ids){
@@ -117,6 +119,7 @@ public class InclusionDependencyFilter {
             toAdd = new ArrayList<>();
         }
         toAdd.removeIf(ids::contains);
+        toAdd.removeIf(InclusionDependencyFilter::allowedInclusionDependency);
         if(toAdd.isEmpty()){
             log.info("getMoreWithTemp: temp is empty: ");
             return new ArrayList<>();
@@ -137,7 +140,8 @@ public class InclusionDependencyFilter {
         if(ids == null){
             return new ArrayList<>();
         }
-        ids =  ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList());
+        ids.removeIf(InclusionDependencyFilter::allowedInclusionDependency);
+        ids = new ArrayList<>(new HashSet<>(ids));
         List<InclusionDependency> temp = new ArrayList<>();
         for(InclusionDependency id: ids){
             for(InclusionDependency j: ids){
