@@ -249,7 +249,11 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		if(message.getResult() != null) {
 			if(message.getResult().hasFilteredResult){
 				minerManager.handleFilteredResult(message.getResult().filteredInclusionDependencies);
-				this.resultCollector.tell(new ResultCollector.ResultMessage(message.getResult().filteredInclusionDependencies));
+				if (message.getResult().filteredInclusionDependencies != null){
+					if (!message.getResult().filteredInclusionDependencies.isEmpty()) {
+						this.resultCollector.tell(new ResultCollector.ResultMessage(message.getResult().filteredInclusionDependencies));
+					}
+				}
 			}
 			else if(message.getResult().isHasResult()) {
 				minerManager.handleResults(message.getResult().getInclusionDependencies());
@@ -268,7 +272,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		}
 		// I still don't know what task the worker could help me to solve ... but let me keep her busy.
 		// Once I found all unary INDs, I could check if this.discoverNaryDependencies is set to true and try to detect n-ary INDs as well!
-		//TODO:  start next Task
+		//TO DO:  start next Task
 
 		//dependencyWorker.tell(new DependencyWorker.TaskMessage(this.largeMessageProxy,  nextTask()));
 		this.nextTask(dependencyWorker);

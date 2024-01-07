@@ -165,7 +165,11 @@ public class MinerManager {
 
 
     public void handleFilteredResult(List<InclusionDependency> filteredInclusionDependencies) {
-        this.res.addAll(filteredInclusionDependencies);
+        if (filteredInclusionDependencies != null){
+            if (!filteredInclusionDependencies.isEmpty()) {
+                this.res.addAll(filteredInclusionDependencies);
+            }
+        }
     }
 
 
