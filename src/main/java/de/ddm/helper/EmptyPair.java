@@ -5,7 +5,6 @@ import lombok.Getter;
 
 import java.util.Objects;
 
-@AllArgsConstructor
 @Getter
 public class EmptyPair {
 
