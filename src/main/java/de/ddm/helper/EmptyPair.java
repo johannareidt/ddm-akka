@@ -3,10 +3,11 @@ package de.ddm.helper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 @Getter
-public class EmptyPair {
+public class EmptyPair implements Serializable {
 
     String columnFile1;
     String columnFile2;
@@ -19,6 +20,8 @@ public class EmptyPair {
         this.columnName1 = columnName1;
         this.columnName2 = columnName2;
     }
+
+
 
     public EmptyPair(CSVColumn column, CSVColumn oc) {
         this.columnName1 = column.getColumnName();
