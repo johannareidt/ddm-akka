@@ -80,9 +80,7 @@ public class AnalyzePair implements Serializable {
                 id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
                         new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
                 log.info(id.get(0).toString());
-            }
-
-            if(firstInSecond>=firstNotInSecond) {
+            }else if(firstInSecond>=firstNotInSecond) {
                 if (firstNotInSecond<=firstInSecond*0.1) {
 
                     //c1SubToc2 = true;
@@ -94,8 +92,7 @@ public class AnalyzePair implements Serializable {
                             new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
                     log.info(id.get(0).toString());
 
-                }
-                else if (firstNotInSecond <= 1) {
+                }else if (firstNotInSecond <= 1) {
                     if(firstInSecond*0.1<=1) {
                         log.info("Pair: " + "firstInSecond>1, firstInSecond>=firstNotInSecond, firstNotInSecond <= 1, firstInSecond*0.1<=1");
 
@@ -116,8 +113,7 @@ public class AnalyzePair implements Serializable {
                 id.add( new InclusionDependency(new File(this.column1.getFilePath()), new String[]{this.column1.getColumnName()},
                         new File(this.column2.getFilePath()), new String[]{this.column2.getColumnName()}));
                 log.info(id.get(0).toString());
-            }
-            if(secondInFirst>=secondNotInFirst) {
+            }else if(secondInFirst>=secondNotInFirst) {
                 if (secondNotInFirst <= secondInFirst * 0.1) {
 
                     //c2SubToc1 = true;
