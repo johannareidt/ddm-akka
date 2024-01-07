@@ -186,7 +186,7 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 		List<InclusionDependency> ids;
 		@Override
 		public DependencyMiner.Result handle() {
-			log.info("FilterInclusionDependendies: handle");
+			log.info("FilterInclusionDependencies: handle");
 			DependencyMiner.Result result = new DependencyMiner.Result();
 			result.hasFilteredResult=true;
 			result.setFilteredInclusionDependencies(InclusionDependencyFilter.getMore(ids));
