@@ -1,6 +1,7 @@
 package de.ddm.helper;
 
 import de.ddm.structures.InclusionDependency;
+import jnr.ffi.annotations.In;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.SimpleLog;
 
@@ -46,10 +47,8 @@ public class InclusionDependencyFilter {
     }
 
     private static List<InclusionDependency> filterWithTemp(List<InclusionDependency> ids, List<InclusionDependency> toAdd){
-        log.info("filterWithTemp: temp is empty: ");
-        for(InclusionDependency id: new ArrayList<>(toAdd)){
-            if(ids.contains(id)) toAdd.remove(id);
-        }
+        log.info("filterWithTemp: ");
+        toAdd.removeIf(ids::contains);
         if(toAdd.isEmpty()){
             log.info("filterWithTemp: temp is empty: ");
             return new ArrayList<>(new HashSet<>(ids));
@@ -96,5 +95,36 @@ public class InclusionDependencyFilter {
 
          */
         //return ids;
+    }
+
+
+    public static List<InclusionDependency> getMoreWithTemp(List<InclusionDependency> ids, List<InclusionDependency> toAdd) {
+        log.info("getMoreWithTemp:  ");
+        toAdd.removeIf(ids::contains);
+        if(toAdd.isEmpty()){
+            log.info("getMoreWithTemp: temp is empty: ");
+            return new ArrayList<>();
+        }
+        ids.addAll(toAdd);
+        List<InclusionDependency> temp = new ArrayList<>();
+        for(InclusionDependency id: ids){
+            for(InclusionDependency j: toAdd) {
+                temp.addAll(metaInclusionDependencies(id, j));
+            }
+
+        }
+        toAdd.addAll(getMoreWithTemp(ids, new ArrayList<>(new HashSet<>(temp))));
+        return toAdd;
+    }
+    public static List<InclusionDependency> getMore(List<InclusionDependency> ids) {
+        log.info("getMore:  ");
+        ids = new ArrayList<>(new HashSet<>( ids.stream().filter(InclusionDependencyFilter::allowedInclusionDependency).collect(Collectors.toList())));
+        List<InclusionDependency> temp = new ArrayList<>();
+        for(InclusionDependency id: ids){
+            for(InclusionDependency j: ids){
+                temp.addAll(metaInclusionDependencies(id, j));
+            }
+        }
+        return new ArrayList<>(new HashSet<>(getMoreWithTemp(ids, temp)));
     }
 }

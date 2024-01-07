@@ -121,6 +121,9 @@ public class TestMinerManager {
 
         }
 
+        minerManager.addTask(new DependencyWorker.LastFilter());
+        minerManager.nextTask();
+
         log.info("almost done: ");
         //minerManager.getResultsLastAdded();
         //log.info(minerManager.getAllResults());

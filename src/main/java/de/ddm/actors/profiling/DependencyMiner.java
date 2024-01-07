@@ -91,6 +91,7 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		List<InclusionDependency> inclusionDependencies = new ArrayList<>();
 		CSVTable table = null;
 		CSVColumn column = null;
+		boolean last = false;
 		//List<EmptyPair> pairs = null;
 	}
 
@@ -258,6 +259,10 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 			}
 			else if(message.getResult().getTable() != null){
 				minerManager.handleTable(message.getResult().getTable());
+			}
+
+			if(message.getResult().isLast()){
+				minerManager.lastDone();
 			}
 		}
 		// I still don't know what task the worker could help me to solve ... but let me keep her busy.

@@ -1,6 +1,7 @@
 package de.ddm.helper;
 
 import akka.cluster.ddata.LWWMap;
+import de.ddm.actors.profiling.DependencyMiner;
 import de.ddm.actors.profiling.DependencyWorker;
 import de.ddm.structures.InclusionDependency;
 
@@ -22,7 +23,6 @@ public class MinerManager {
     private final HashMap<Integer, DependencyWorker.Task> currentlyDoing = new HashMap<>();
 
     private final List<InclusionDependency> res = new ArrayList<>();
-    private final List<InclusionDependency> last = new ArrayList<>();
     private final HashMap<String, HashMap<String, List<CSVColumn>>> nextTables = new HashMap<>();
 
 
@@ -63,8 +63,7 @@ public class MinerManager {
      */
 
     public void handleResults(List<InclusionDependency> ids){
-        this.last.addAll(ids);
-        this.addTask(new DependencyWorker.FilterInclusionDependendies(this.last));
+        this.addTask(new DependencyWorker.FilterInclusionDependendies(ids));
         //this.addTask(new DependencyWorker.FilterInclusionDependendies(this.res));
     }
 
@@ -163,6 +162,11 @@ public class MinerManager {
     }
 
 
+    public void handleFilteredResult(List<InclusionDependency> filteredInclusionDependencies) {
+        this.res.addAll(filteredInclusionDependencies);
+    }
+
+
 
 
 
@@ -176,10 +180,23 @@ public class MinerManager {
     public DependencyWorker.Task nextTask(){
         DependencyWorker.Task task = tasks.poll();
         if(task == null){
+            checkAllIdleWorkerWithResult();
             return new DependencyWorker.WaitTask();
         }
         task.load(loader);
         return task;
+    }
+
+    private void checkAllIdleWorkerWithResult(){
+        if(this.res.size()>0){
+            for(DependencyWorker.Task t:this.currentlyDoing.values()){
+                if(!(t instanceof DependencyWorker.WaitTask)){
+                    return;
+                }
+            }
+            log.info("No one works, results are here: filter and start end!");
+            this.addTask(new DependencyWorker.LastFilter());
+        }
     }
 
 
@@ -201,13 +218,7 @@ public class MinerManager {
     }
 
 
-    public void handleFilteredResult(List<InclusionDependency> filteredInclusionDependencies) {
-        this.res.addAll(filteredInclusionDependencies);
-    }
 
-    public List<InclusionDependency> getAllResults() {
-        return this.res;
-    }
 
 
     private CSVColumn get(
@@ -231,6 +242,12 @@ public class MinerManager {
                 .findFirst()
                 .get();
     }
+
+    public void lastDone() {
+        log.info("IS DONE: ");
+        this.res.stream().peek(id->log.info("Results: "+id.toString()));
+    }
+
     public class TaskLoader {
         public AnalyzePair getAnalyzerPair(EmptyPair emptyPair) {
             return new AnalyzePair(
@@ -243,6 +260,10 @@ public class MinerManager {
             List<CSVColumn> temp =  MinerManager.this.nextTables.get(path).get(cn);
             //MinerManager.this.nextTables.get(path).rem ove(cn);
             return temp;
+        }
+
+        public List<InclusionDependency> getAllResults() {
+            return MinerManager.this.res;
         }
     }
 }
