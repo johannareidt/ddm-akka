@@ -13,12 +13,16 @@ public class EmptyPair implements Serializable {
     String columnFile2;
     String columnName1;
     String columnName2;
+    boolean empty = true;
+
+
 
     public EmptyPair(String columnFile1, String columnFile2, String columnName1, String columnName2) {
         this.columnFile1 = columnFile1;
         this.columnFile2 = columnFile2;
         this.columnName1 = columnName1;
         this.columnName2 = columnName2;
+        this.empty = false;
     }
 
 
@@ -28,6 +32,7 @@ public class EmptyPair implements Serializable {
         this.columnFile1 = column.getFilePath();
         this.columnFile2= oc.getFilePath();
         this.columnName2= oc.getColumnName();
+        this.empty = false;
     }
 
     public AnalyzePair transform(CSVTable t1, CSVTable t2){

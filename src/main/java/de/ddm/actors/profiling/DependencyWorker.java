@@ -75,7 +75,6 @@ public class DependencyWorker extends AbstractBehavior<DependencyWorker.Message>
 			log.info("AnalyzeTask: handle");
 
 			DependencyMiner.Result result = new DependencyMiner.Result();
-			result.setEmptyPair(emptyPair);
 			result.setHasResult(true);
 
 

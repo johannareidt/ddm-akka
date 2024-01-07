@@ -79,6 +79,8 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 	// Result Format      //
 	////////////////////////
 
+
+
 	@Getter
 	@Setter
 	@NoArgsConstructor
@@ -87,7 +89,6 @@ public class DependencyMiner extends AbstractBehavior<DependencyMiner.Message> {
 		boolean hasFilteredResult = false;
 		List<InclusionDependency> filteredInclusionDependencies = new ArrayList<>();
 		boolean hasResult = false;
-		EmptyPair emptyPair = null;
 		List<InclusionDependency> inclusionDependencies = new ArrayList<>();
 		CSVTable table = null;
 		CSVColumn column = null;
