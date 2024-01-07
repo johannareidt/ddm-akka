@@ -17,7 +17,7 @@ public class EmptyPair {
     public EmptyPair(CSVColumn column, CSVColumn oc) {
         this.columnName1 = column.getColumnName();
         this.columnFile1 = column.getFilePath();
-        this.columnFile2= oc.getColumnName();
+        this.columnFile2= oc.getFilePath();
         this.columnName2= oc.getColumnName();
     }
 

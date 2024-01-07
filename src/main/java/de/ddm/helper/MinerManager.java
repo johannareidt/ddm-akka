@@ -214,7 +214,15 @@ public class MinerManager {
             String path,
             String columnName
     ){
-        return this.columns.get(path)
+        if(this.columns == null){
+            throw new RuntimeException();
+        }
+        if(this.columns.get(path) == null){
+            log.error("keine spalten hinterlegt in path: "+path);
+            log.error("paths mit spalten: "+this.columns.keySet());
+            throw new RuntimeException();
+        }
+        return this.columns.getOrDefault(path, new ArrayList<>())
                 .stream()
                 .filter(column ->
                         columnName
