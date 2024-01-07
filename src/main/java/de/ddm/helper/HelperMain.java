@@ -2,14 +2,7 @@ package de.ddm.helper;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import de.ddm.actors.profiling.DependencyMiner;
-import de.ddm.actors.profiling.DependencyWorker;
-import de.ddm.actors.profiling.InputReader;
-import de.ddm.singletons.DomainConfigurationSingleton;
-import de.ddm.singletons.InputConfigurationSingleton;
 import de.ddm.structures.InclusionDependency;
-import jnr.ffi.annotations.In;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
 import java.util.*;
@@ -17,94 +10,17 @@ import java.util.stream.Collectors;
 
 public class HelperMain {
 
-    static final int batchSize = DomainConfigurationSingleton.get().getInputReaderBatchSize();
-
     static final HashMap<String, List<CSVColumn>> columns = new HashMap<>();
 
 
-    public static CSVReader getReader(File inputFile) throws IOException, CsvValidationException {
-        CSVReader reader = InputConfigurationSingleton.get().createCSVReader(inputFile);
-        String[] header = InputConfigurationSingleton.get().getHeader(inputFile);
-
-        if (InputConfigurationSingleton.get().isFileHasHeader())
-            reader.readNext();
-        return reader;
-    }
-
-    public static String[] getHeader(File inputFile) throws IOException, CsvValidationException {
-        return InputConfigurationSingleton.get().getHeader(inputFile);
-    }
-
-    public static List<String[]> readBatch(CSVReader reader) throws CsvValidationException, IOException {
-        List<String[]> batch = new ArrayList<>(batchSize);
-        for (int i = 0; i < batchSize; i++) {
-            String[] line = reader.readNext();
-            if (line == null)
-                break;
-            batch.add(line);
-        }
-        //System.out.println(batch);
-        return batch;
-    }
-
     public static void startFile(File file) throws CsvValidationException, IOException {
-        CSVReader reader = getReader(file);
-        String[] header = getHeader(file);
-        readBatch(reader);
+        CSVReader reader = TestHelper.getReader(file);
+        String[] header = TestHelper.getHeader(file);
+        TestHelper.readBatch(reader);
 
     }
 
 
-    public static List<CSVTable> readBatches(String filepath, CSVReader reader) throws CsvValidationException, IOException {
-        //List<List<String[]>> res = new ArrayList<>();
-        List<CSVTable> tables = new ArrayList<>();
-        List<String[]> last = new ArrayList<>();
-
-        String[] header = getHeader(new File(filepath));
-
-        //System.out.println(filepath + Arrays.toString(header));
-        last = readBatch(reader);
-        while (last.size() != 0){
-            //res.add(last);
-            //Create Table Task
-            tables.add(new CSVTable(filepath, last, header));
-            tables.get(tables.size()-1).split();
-            last = readBatch(reader);
-        }
-        return tables;
-        //Read Batch message
-        /*
-        if (message.getBatch().size() != 0) {
-            this.inputReaders.get(message.getId()).tell(new InputReader.ReadBatchMessage(this.getContext().getSelf()));
-
-            this.tasks.add(new DependencyWorker.CreateTableTask(
-                    inputFiles[message.id].getPath(),
-                    message.batch));
-        }else{
-            System.out.println("Batch zero");
-        }
-
-         */
-    }
-
-    public static List<CSVReader> getReaders(List<File> files) throws CsvValidationException, IOException {
-        List<CSVReader> readers = new ArrayList<>();
-        for (File f: files){
-            //System.out.println(Arrays.toString(getHeader(f)));
-            readers.add(getReader(f));
-        }
-        return readers;
-    }
-
-    public static HashMap<String, List<CSVTable>> read(List<File> files) throws CsvValidationException, IOException {
-        HashMap<String, List<CSVTable>> tables = new HashMap<>();
-        for(File file: files){
-            CSVReader reader = getReader(file);
-            tables.put(file.getPath(), readBatches(file.getPath(), reader));
-            //read ReadBatchMessage from input reader
-        }
-        return tables;
-    }
 
     public static List<EmptyPair> makePairs( HashMap<String, List<CSVTable>> tables){
         //MakePairs
@@ -166,7 +82,7 @@ public class HelperMain {
     }
 
     public static void analyzeTask(HashMap<String, List<CSVTable>> tables, InclusionDependency id, String pre, List<String> solutions){
-        loadColumns(tables);
+        TestHelper.loadColumns(tables);
         AnalyzePair analyzePair = new AnalyzePair(
                 columns.get(id.getDependentFile().getPath())
                         .stream().filter(column ->
@@ -194,38 +110,12 @@ public class HelperMain {
 
     }
 
-    public static void loadColumns(HashMap<String, List<CSVTable>> tables){
-        columns.clear();
-        for(String path: tables.keySet()){
-            columns.put(path, new ArrayList<>());
-            HashMap<String, List<CSVColumn>> tempTableColumns = new HashMap<>();
-            for (CSVTable t : tables.get(path)) {
-                for (String cn : t.getColumnNames()) {
-                    if (!tempTableColumns.containsKey(cn)) {
-                        tempTableColumns.put(cn, new ArrayList<>());
-                    }
-                    tempTableColumns.get(cn).add(t.getColumn(cn));
-                }
-            }
-            for(String cn: tempTableColumns.keySet()) {
-                ArrayList<String> entries = new ArrayList<>();
-                for (CSVColumn c : tempTableColumns.get(cn)) {
-                    entries.addAll(c.getEntries());
-                }
-                columns.get(path).add(new CSVColumn(path, cn, entries));
-            }
-
-
-
-        }
-    }
-
     public static HashMap<EmptyPair, List<InclusionDependency>> analyzeTask(HashMap<String, List<CSVTable>> tables){
         HashMap<EmptyPair, List<InclusionDependency>>res =new HashMap<>();
 
         HashMap<CSVColumn, List<CSVColumn>> temp = new HashMap<>();
 
-        loadColumns(tables);
+        TestHelper.loadColumns(tables);
 
         for(String path1: columns.keySet()){
             for(String path2: columns.keySet()){
@@ -258,33 +148,12 @@ public class HelperMain {
         return res;
     }
 
-    public static List<String> getResults() throws IOException {
-        String resultspath = "C:\\Users\\johan\\Documents\\GitHub\\ddm-akka\\data\\results.txt";
-        // Open the file
-        FileInputStream fstream = new FileInputStream(resultspath);
-        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-
-        List<String> lines  = new ArrayList<>();
-        String line;
-
-        //Read File Line By Line
-        while ((line = br.readLine()) != null)   {
-            // Print the content on the console - do what you want to do
-            lines.add(line);
-        }
-
-        //Close the input stream
-        fstream.close();
-        return lines;
-    }
-
-
 
     public static void analyzeAll(){
 
         List<String> solution = new ArrayList<>();
         try {
-            solution = getResults();
+            solution = TestHelper.getResults();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -293,7 +162,7 @@ public class HelperMain {
         //System.out.println(files);
         HashMap<String, List<CSVTable>> tables = new HashMap<>();
         try {
-            tables = read(files);
+            tables = TestHelper.read(files);
         } catch (CsvValidationException | IOException e) {
             throw new RuntimeException(e);
         }
@@ -542,7 +411,7 @@ public class HelperMain {
     public static void analyzeSolutions(){
         List<String> solution = new ArrayList<>();
         try {
-            solution = getResults();
+            solution = TestHelper.getResults();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -551,7 +420,7 @@ public class HelperMain {
         //System.out.println(files);
         HashMap<String, List<CSVTable>> tables = new HashMap<>();
         try {
-            tables = read(files);
+            tables = TestHelper.read(files);
         } catch (CsvValidationException | IOException e) {
             throw new RuntimeException(e);
         }

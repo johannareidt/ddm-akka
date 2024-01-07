@@ -1,8 +1,6 @@
 package de.ddm.helper;
 
-import de.ddm.actors.profiling.DependencyMiner;
 import de.ddm.actors.profiling.DependencyWorker;
-import de.ddm.actors.profiling.ResultCollector;
 import de.ddm.structures.InclusionDependency;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -15,43 +13,76 @@ public class MinerManager {
     private final HashMap<String, List<CSVTable>> tables = new HashMap<>();
     private final HashMap<String, List<CSVColumn>> columns = new HashMap<>();
     private final Queue<DependencyWorker.Task> tasks = new ArrayDeque<>();
-    private final HashMap<Pair<String, String>, List<Pair<String, String>>> dependencies = new HashMap<>();
+    //private final HashMap<Pair<String, String>, List<Pair<String, String>>> dependencies = new HashMap<>();
     private final HashMap<Integer, DependencyWorker.Task> currentlyDoing = new HashMap<>();
 
     private final List<InclusionDependency> res = new ArrayList<>();
+    private final List<InclusionDependency> last = new ArrayList<>();
 
 
-    public ResultCollector.ResultMessage getResults(){
-        ResultCollector.ResultMessage rm =  new ResultCollector.ResultMessage(this.res);
-        this.res.clear();
-        return rm;
-    }
 
-    private void handleResults(List<InclusionDependency> ids){
+    // INCLUSION-DEPENDENCIES
 
-        //List<InclusionDependency> ids = new ArrayList<>(message.getResult().getInclusionDependencies());
-        if(ids.isEmpty()){
-            ids.add(null);
-        }
-
-        for(InclusionDependency id: ids){
-            if(id!= null) {
-                Pair<String, String> referenced = new ImmutablePair<>(id.getReferencedFile().toString(), id.getReferencedAttributes()[0]);
-                Pair<String, String> dependent = new ImmutablePair<>(id.getDependentFile().toString(), id.getDependentAttributes()[0]);
-                if(!dependencies.containsKey(referenced)){
-                    dependencies.put(referenced, new ArrayList<>());
-                }
-                dependencies.get(referenced).add(dependent);
-                if(dependencies.containsKey(dependent)){
-                    dependencies.get(referenced).addAll(dependencies.get(dependent));
-                }
+    private void addMetaResultsFromLast(){
+        List<InclusionDependency> temp = new ArrayList<>(last);
+        //last.clear();
+        for(InclusionDependency id: res){
+            for(InclusionDependency toAdd: temp){
+                last.addAll(metaInclusionDependencies(id, toAdd));
             }
         }
-
-        this.res.addAll(ids);
-
-        //this.resultCollector.tell(new ResultCollector.ResultMessage(ids));
+        res.addAll(temp);
     }
+
+
+    private List<InclusionDependency> metaInclusionDependencies(InclusionDependency id1, InclusionDependency id2){
+        List<InclusionDependency> temp = new ArrayList<>();
+        if(id1.getDependentFile().getPath().equals(id2.getReferencedFile().getPath())){
+            temp.add(new InclusionDependency(
+                    id1.getReferencedFile(), id1.getReferencedAttributes(),
+                    id2.getDependentFile(), id2.getDependentAttributes()));
+        }
+        if(id1.getReferencedFile().getPath().equals(id2.getDependentFile().getPath())){
+            temp.add(new InclusionDependency(
+                    id2.getReferencedFile(), id2.getReferencedAttributes(),
+                    id1.getDependentFile(), id1.getDependentAttributes()));
+        }
+        return temp;
+    }
+
+    private List<InclusionDependency> checkAllInclusionDependency(List<InclusionDependency> ids){
+        while (ids.contains(null)){
+            ids.remove(null);
+        }
+        for(InclusionDependency checkAgainst: res){
+            ids.forEach(i-> ids.addAll(metaInclusionDependencies(checkAgainst, i)));
+        }
+        for(InclusionDependency checkAgainst: ids){
+            ids.forEach(i-> ids.addAll(metaInclusionDependencies(checkAgainst, i)));
+        }
+        return ids;
+    }
+
+
+
+
+    public List<InclusionDependency> getResultsLastAdded(){
+        this.addMetaResultsFromLast();
+        //this.last.clear();
+        List<InclusionDependency> temp = new ArrayList<>(this.last);
+        this.res.addAll(this.last);
+        this.last.clear();
+        return temp;
+    }
+
+    public void handleResults(List<InclusionDependency> ids){
+        this.last.addAll(this.checkAllInclusionDependency(ids));
+    }
+
+
+
+
+    //READING
 
     public void handleColumn(CSVColumn column){
         //CSVColumn column = message.getResult().getColumn();
@@ -120,28 +151,6 @@ public class MinerManager {
         //this.tables.put(res.getFilepath(), res);
     }
 
-    public void saveAndNext(DependencyMiner.CompletionMessage message){
-        if(message.getResult() != null) {
-            if(message.getResult().isHasResult()) {
-                handleResults(message.getResult().getInclusionDependencies());
-                
-            }
-			/*
-			if(message.result.pairs != null){
-				this.pairs.addAll(message.result.pairs);
-			}
-
-			 */
-            if(message.getResult().getColumn() != null){
-                handleColumn(message.getResult().getColumn());
-            }
-            if(message.getResult().getTable() != null){
-                handleTable(message.getResult().getTable());
-            }
-        }
-    }
-
-
     public void readTableFinish(String path){
         //System.out.println("Batch zero");
         HashMap<String, List<CSVColumn>> columns = new HashMap<>();
@@ -159,6 +168,12 @@ public class MinerManager {
             this.tasks.add(new DependencyWorker.MergeBatchColumn(path, cn, columns.get(cn)));
         }
     }
+
+
+
+
+
+    //TASK-HANDLING
 
 
     public void addTask(DependencyWorker.Task task){
